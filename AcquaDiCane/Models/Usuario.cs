@@ -1,5 +1,4 @@
 ﻿using System.Net.Mail;
-using AcquaDiCane.Models.ClasesEnum;
 
 namespace AcquaDiCane.Models
 {
@@ -12,6 +11,6 @@ namespace AcquaDiCane.Models
         public string CorreoElectronico { get; set; }
         public DateTime FechaNacimiento { get; set; }
         public string Contraseña { get; set; }
-        public RolUsuario Rol {  get; set; }
+        public string Rol {  get; set; }
     }
 }

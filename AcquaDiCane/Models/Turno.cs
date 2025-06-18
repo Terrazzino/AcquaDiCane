@@ -11,6 +11,7 @@
         public List<DetalleDelTurno> Detalles { get; set; } = new List<DetalleDelTurno>();
         public double PrecioTotal { get; set; }
         public string Observacion { get; set; }
+        public Pago Pago { get; set; }
 
         public void AgregarDetalle(DetalleDelTurno detalle)
         {
