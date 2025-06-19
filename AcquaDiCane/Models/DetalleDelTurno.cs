@@ -7,5 +7,6 @@
         public Servicio ServicioAsignado { get; set; }
         public int TurnoAsignadoId { get; set; }
         public Turno TurnoAsignado { get; set; }
+        public double PrecioServicio { get; set; }
     }
 }

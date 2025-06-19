@@ -2,15 +2,15 @@
 {
     public class Peluquero:Usuario
     {
-        public List<Disponibilidad> Disponibilidades { get; set; } = new List<Disponibilidad>();
+        public List<JornadaDiaria> JornadaSemanal { get; set; } = new List<JornadaDiaria>();
         public List<Turno> Turnos { get; set; } = new List<Turno>();
 
-        public void AgregarDisponibilidad(Disponibilidad disponibilidad)
+        public void AgregarDisponibilidad(JornadaDiaria jornada)
         {
-            var disp = Disponibilidades.FirstOrDefault(x=>disponibilidad.Dia==x.Dia);
-            if (disp==null)
+            var jor = JornadaSemanal.FirstOrDefault(x=>jornada.Dia==x.Dia);
+            if (jor==null)
             {
-                Disponibilidades.Add(disponibilidad);
+                JornadaSemanal.Add(jornada);
             }
         }
     }

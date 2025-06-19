@@ -15,5 +15,6 @@ namespace AcquaDiCane.Models
         public string Raza { get; set; }
         public double Peso { get; set; }
         public DateTime FechaNacimiento { get; set; }
+        public List<Turno> Turnos { get; set; } = new List<Turno>();
     }
 }

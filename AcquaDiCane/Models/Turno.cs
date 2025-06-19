@@ -15,7 +15,7 @@
 
         public void AgregarDetalle(DetalleDelTurno detalle)
         {
-            var det = Detalles.FirstOrDefault(x=> detalle.ServicioAsignado.TipoDeServicio == x.ServicioAsignado.TipoDeServicio);
+            var det = Detalles.FirstOrDefault(x=> detalle.ServicioAsignado.nombreServicio == x.ServicioAsignado.nombreServicio);
             if (det==null)
             {
                 Detalles.Add(detalle);

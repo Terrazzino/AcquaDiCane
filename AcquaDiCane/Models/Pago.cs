@@ -12,6 +12,7 @@
         public ReciboDePago ReciboDePago { get; set; }
         public MetodoDePago MetodoDePago { get; set; }
         public int MetodoDePagoId { get; set; }
+        public string CuentaDestino { get; set; }
     }
 
 }

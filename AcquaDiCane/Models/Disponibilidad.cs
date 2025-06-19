@@ -1,7 +1,7 @@
 ﻿
 namespace AcquaDiCane.Models
 {
-    public class Disponibilidad
+    public class JornadaDiaria
     {
         public int Id { get; set; }
         public int PeluqueroCorrespondienteId { get; set; }

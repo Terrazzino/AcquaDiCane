@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using AcquaDiCane.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace AcquaDiCane.Data
@@ -11,3 +12,4 @@ namespace AcquaDiCane.Data
         }
     }
 }
+
