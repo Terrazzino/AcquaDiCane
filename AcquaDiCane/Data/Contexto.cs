@@ -1,70 +1,114 @@
 ﻿using AcquaDiCane.Models;
+using AcquaDiCane.Models.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace AcquaDiCane.Data
 {
-    public class Contexto : DbContext
+    public class Contexto : IdentityDbContext<AplicationUser, IdentityRole<int>, int>
     {
-        public Contexto(DbContextOptions<Contexto> options)
-            : base(options)
+        public Contexto(DbContextOptions<Contexto> options): base(options)
         {
         }
 
         public DbSet<Cliente> Clientes { get; set; }
-        public DbSet<Mascota> Mascotas { get; set; }
-        public DbSet<Turno> Turnos { get; set; }
-        public DbSet<ReciboDePago> ReciboDePagos { get; set; }
-        public DbSet<Servicio> Servicios { get; set; }
         public DbSet<Peluquero> Peluqueros { get; set; }
-        public DbSet<JornadaDiaria> Jornadas { get; set; }
+        public DbSet<DetalleDelTurno> DetallesDeTurnos { get; set; }
+        public DbSet<JornadaDiaria> JornadasSemanales {  get; set; }
+        public DbSet<Mascota> Mascotas { get; set; }
+        public DbSet<MetodoDePago> MetodosDePago { get; set; }
+        public DbSet<Pago> Pagos { get; set; }
+        public DbSet<ReciboDePago> RecibosDePago { get; set; }
+        public DbSet<Servicio> Servicios { get; set; }
+        public DbSet<Turno> Turnos { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder builder)
         {
-            modelBuilder.Entity<Turno>()
-                .HasOne(t => t.Pago) //turno tiene 0 o 1 pago
-                .WithOne(p => p.Turno) // un pago pertenece a un turno
-                .HasForeignKey<Pago>(p => p.TurnoId); // clave foranea que relaciona el pago con su turno
+            base.OnModelCreating(builder);
 
-            modelBuilder.Entity<Turno>()
-                .HasMany(t => t.Detalles) //un turno puede incluir varios detalles
-                .WithOne(dt => dt.TurnoAsignado)// cada detelle pertenece a un unico turno
-                .HasForeignKey(dt => dt.TurnoAsignadoId); // clave foranea que relaciona detalle con turno
+            builder.Entity<AplicationUser>()
+                .HasOne(u=>u.PerfilCliente)
+                .WithOne(c=>c.AplicationUser)
+                .HasForeignKey<Cliente>(c=>c.AplicationUserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Pago>()
-                .HasOne(p => p.ReciboDePago) //un pago puede tener 0 o 1 Recibo 
-                .WithOne(r => r.Pago)// El recibo depende del pago, solo se genera si el estado del pago es "aprobado"
-                .HasForeignKey<ReciboDePago>(r => r.PagoId); // clave foranea que relaciona el recibo con el pago 
+            builder.Entity<AplicationUser>()
+                .HasOne(u => u.PerfilPeluquero)
+                .WithOne(p=>p.AplicationUser)
+                .HasForeignKey<Peluquero>(p=>p.AplicationUserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Pago>()
-                .HasOne(p => p.MetodoDePago) // cada pago se realiza con 1 metodo
-                .WithMany(m => m.Pagos) // cada metodo tiene la lista de pagos que se realizaron con ese metodo 
-                .HasForeignKey(p => p.MetodoDePagoId);  // clave foranea que relaciona el pago con el metodo utilzado 
+            builder.Entity<Mascota>()
+                .HasOne(m=>m.ClienteAsignado)
+                .WithMany(c=>c.Mascotas)
+                .HasForeignKey(m=>m.ClienteAsignadoId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Peluquero>()
-                .HasMany(p => p.Turnos) //un peluquero puede tener muchos turnos asignados
-                .WithOne(t => t.PeluqueroAsignado) // cada turno pertenece a un unico peluquero
-                .HasForeignKey(t => t.PeluqueroAsignadoId); // clave foranea que relaciona el turno con el peluquero 
+            builder.Entity<JornadaDiaria>()
+                .HasOne(j => j.PeluqueroCorrespondiente)
+                .WithMany(p => p.JornadaSemanal)
+                .HasForeignKey(j => j.PeluqueroCorrespondienteId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Peluquero>()
-                .HasMany(p => p.JornadaSemanal) // un peluquero tiene muchas jornadasDiarias = una jornadaSemanal
-                .WithOne(j => j.PeluqueroCorrespondiente) // a cada jornada le corresponde un peluquero
-                .HasForeignKey(j => j.PeluqueroCorrespondienteId);// clave foranea que relaciona la jornada con el peluquero 
+            builder.Entity<Turno>()
+                .HasOne(t => t.PeluqueroAsignado)
+                .WithMany(p => p.Turnos)
+                .HasForeignKey(t => t.PeluqueroAsignadoId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
 
+            builder.Entity<DetalleDelTurno>()
+                .HasOne(d => d.TurnoAsignado)
+                .WithMany(t => t.Detalles)
+                .HasForeignKey(d => d.TurnoAsignadoId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Servicio>()
-                .HasMany(s => s.Detalles)// un servicio puede incluir varios detalles 
-                .WithOne(dt => dt.ServicioAsignado) // cada detalle tiene un servicio asignado
-                .HasForeignKey(dt => dt.ServicioAsignadoId); // clave foranea que relaciona el servicio de cada detalle con el detalle
+            builder.Entity<DetalleDelTurno>()
+                .HasOne(d => d.ServicioAsignado)
+                .WithMany(t => t.Detalles)
+                .HasForeignKey(d => d.ServicioAsignadoId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Cliente>()
-                .HasMany(c => c.Mascotas) // un cliente tiene muchas mascotas
-                .WithOne(m => m.ClienteAsignado)// una mascota tiene un cliente
-                .HasForeignKey(m => m.ClienteAsignadoId); // clave foranea que relaciona la mascota con su respectivo cliente
+            builder.Entity<Turno>()
+                .HasOne(t => t.MascotaAsignada)
+                .WithOne(m => m.Turno)
+                .HasForeignKey<Turno>(t => t.MascotaAsignadaId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Mascota>()
-                .HasMany(m => m.Turnos) // cada mascota puede tener muchos turnos (historial)
-                .WithOne(t => t.MascotaAsignada) // cada turno tiene una unica mascota
-                .HasForeignKey(t => t.MascotaAsignadaId); // clave foranea que vincula cada turno con la mascota
+            builder.Entity<Pago>()
+                .HasOne(p=>p.Turno)
+                .WithOne()
+                .HasForeignKey<Pago>(p=>p.TurnoId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ReciboDePago>()
+                .HasOne(r=>r.Pago)
+                .WithOne()
+                .HasForeignKey<ReciboDePago>(r=>r.PagoId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Pago>()
+                .HasOne(p => p.MetodoDePago)
+                .WithMany(m => m.Pagos)
+                .HasForeignKey(p => p.MetodoDePagoId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configuración de decimales para precios, para asegurar precisión en campos de dinero
+            builder.Entity<Pago>()
+                .Property(p => p.Monto)
+                .HasColumnType("decimal(18,2)");
 
         }
     }

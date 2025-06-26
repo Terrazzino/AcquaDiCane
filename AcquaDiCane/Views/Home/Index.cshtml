@@ -1,8 +1,161 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Acqua Di Cane - Acceso";
+    Layout = null;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/acqua-di-cane.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="split-container">
+        <div class="split-half left-half">
+            <div class="content-wrapper" id="leftContent">
+                <button class="btn-action" id="loginButton">Iniciar Sesión</button>
+            </div>
+            <div class="login-form-container" id="loginFormContainer">
+                <h1 class="form-title">Acqua Di Cane</h1>
+                @* Login Form *@
+                <form id="loginForm" asp-controller="Account" asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+
+                    @* Mostrar errores generales de Login *@
+                    @if (ViewData["LoginErrors"] is List<string> loginErrors && loginErrors.Any())
+                    {
+                        <ul class="error-message" style="display:block;">
+                            @foreach (var error in loginErrors)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    }
+
+                    <div class="input-group">
+                        <label for="loginEmail">Correo electrónico</label>
+                        <input type="email" id="loginEmail" name="Email" placeholder="tu@email.com" required value="@ViewData["LoginEmail"]">
+                    </div>
+                    <div class="input-group">
+                        <label for="loginPassword">Contraseña</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="loginPassword" name="Password" placeholder="********" required>
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('loginPassword')">
+                                <span class="show-password-icon">👁️</span>
+                                <span class="hide-password-icon" style="display:none;">🔒</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#">Olvidé mi contraseña</a>
+                    </div>
+                    <button type="submit" class="btn-primary">Iniciar Sesión</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="main-title-overlay" id="mainTitleOverlay">
+            <h1>Acqua Di Cane</h1>
+        </div>
+
+        <div class="split-half right-half">
+            <div class="content-wrapper" id="rightContent">
+                <button class="btn-action" id="registerButton">Registrarme</button>
+            </div>
+            <div class="register-form-container" id="registerFormContainer">
+                <h1 class="form-title">Acqua Di Cane</h1>
+                @* Register Form *@
+                <form id="registerForm" asp-controller="Account" asp-action="Register" method="post">
+                    @Html.AntiForgeryToken()
+
+                    @* Mostrar errores generales de Registro *@
+                    @if (ViewData["RegisterErrors"] is List<string> registerErrors && registerErrors.Any())
+                    {
+                        <ul class="error-message" style="display:block;">
+                            @foreach (var error in registerErrors)
+                            {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    }
+
+                    <div class="input-group">
+                        <label for="registerName">Nombre</label>
+                        <input type="text" id="registerName" name="Name" placeholder="Tu nombre" required value="@ViewData["RegisterName"]">
+                    </div>
+                    <div class="input-group">
+                        <label for="registerLastName">Apellido</label>
+                        <input type="text" id="registerLastName" name="LastName" placeholder="Tu apellido" required value="@ViewData["RegisterLastName"]">
+                    </div>
+                    <div class="input-group">
+                        <label for="registerEmail">Correo electrónico</label>
+                        <input type="email" id="registerEmail" name="Email" placeholder="tu@email.com" required value="@ViewData["RegisterEmail"]">
+                        <small>Formato: ejemplo@gmail.com</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="registerPhone">Celular</label>
+                        <input type="tel" id="registerPhone" name="PhoneNumber" placeholder="341 123-4567" pattern="[0-9]{3} [0-9]{3}-[0-9]{4}" title="Formato: Código de área (3 dígitos) Número (7 dígitos)" value="@ViewData["RegisterPhoneNumber"]">
+                        <small>Formato: Código de área - Número (ej. 341 123-4567)</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="registerDNI">DNI</label> @* Agregado DNI *@
+                        <input type="text" id="registerDNI" name="DNI" placeholder="Tu DNI" required value="@ViewData["RegisterDNI"]">
+                    </div>
+                    <div class="input-group">
+                        <label for="registerBirthdate">Fecha de nacimiento</label>
+                        <input type="date" id="registerBirthdate" name="BirthDate" required value="@ViewData["RegisterBirthDate"]">
+                    </div>
+                    <div class="input-group">
+                        <label for="registerPassword">Contraseña</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="registerPassword" name="Password" placeholder="********" required>
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('registerPassword')">
+                                <span class="show-password-icon">👁️</span>
+                                <span class="hide-password-icon" style="display:none;">🔒</span>
+                            </button>
+                        </div>
+                        <small>Al menos 8 caracteres, una mayúscula, una minúscula y un número.</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="confirmPassword">Confirmar contraseña</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirmPassword" name="ConfirmPassword" placeholder="********" required>
+                            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">
+                                <span class="show-password-icon">👁️</span>
+                                <span class="hide-password-icon" style="display:none;">🔒</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Registrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/js/script.js"></script>
+    <script>
+        // Lógica para mostrar el formulario correcto si hay errores después de un POST
+        document.addEventListener('DOMContentLoaded', function() {
+            var showLoginForm = @((ViewData["ShowLoginForm"] ?? false).ToString().ToLower());
+            var showRegisterForm = @((ViewData["ShowRegisterForm"] ?? false).ToString().ToLower());
+
+            if (showLoginForm) {
+                // Simula el clic del botón de login para activar el formulario
+                document.getElementById('loginButton').click();
+            } else if (showRegisterForm) {
+                // Simula el clic del botón de registro
+                document.getElementById('registerButton').click();
+            }
+        });
+
+        // Asegúrate de que tu script.js maneje la visibilidad de los formularios
+        // y los botones de acuerdo a tu diseño de UI deslizable.
+        // La lógica de `togglePasswordVisibility` parece estar bien si los IDs coinciden.
+    </script>
+</body>
+</html>

@@ -1,0 +1,616 @@
+﻿/* General Dashboard Layout */
+.client-dashboard-container {
+    display: flex;
+    min-height: calc(100vh - var(--header-height, 0px) - var(--footer-height, 0px)); /* Ajusta a la altura de tu header/footer si los hay */
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f8f8f8;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 280px; /* Un poco más ancho */
+    background-color: #34495e; /* Azul oscuro */
+    color: #ecf0f1; /* Gris claro */
+    padding: 30px 20px; /* Más padding */
+    box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centrar contenido */
+    gap: 30px; /* Espacio entre elementos */
+    background-image: url('../img/sidebar-bg.jpg'); /* Si tienes una imagen de fondo */
+    background-size: cover;
+    background-position: center;
+    position: relative; /* Para el overlay */
+}
+
+    .sidebar::before { /* Overlay oscuro para la imagen de fondo */
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(52, 73, 94, 0.85); /* Overlay semi-transparente */
+    }
+
+    .sidebar > * { /* Asegurar que el contenido esté sobre el overlay */
+        z-index: 1;
+        position: relative;
+    }
+
+
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+    .sidebar-header h2 {
+        color: #ffffff; /* Blanco para el título */
+        font-family: 'Dancing Script', cursive;
+        font-size: 3em; /* Más grande */
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .sidebar-header p {
+        font-size: 1em;
+        opacity: 0.9;
+    }
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.sidebar-button {
+    width: 100%;
+    background-color: #e74c3c; /* Rojo vibrante */
+    color: white;
+    border: none;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 8px; /* Bordes más redondeados */
+    font-size: 1.1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+    .sidebar-button:hover:not(:disabled) {
+        background-color: #c0392b;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+
+    .sidebar-button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .sidebar-button:disabled {
+        background-color: #95a5a6; /* Gris para deshabilitado */
+        cursor: not-allowed;
+        opacity: 0.7;
+        box-shadow: none;
+    }
+
+/* Main Content */
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    margin: 20px;
+    display: flex;
+    flex-direction: column; /* Para organizar el contenido verticalmente */
+    align-items: center; /* Centrar horizontalmente el contenido principal */
+}
+
+.main-title {
+    color: #34495e;
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    border-bottom: 3px solid #e74c3c; /* Línea roja debajo del título */
+    padding-bottom: 10px;
+    width: 100%; /* Ocupa todo el ancho */
+    text-align: center;
+}
+
+.dashboard-section {
+    display: none; /* Hidden by default, JS shows active one */
+    width: 100%; /* Ocupa todo el ancho disponible */
+}
+
+    .dashboard-section.active {
+        display: block;
+    }
+
+.section-description {
+    text-align: center;
+    color: #555;
+    margin-bottom: 25px;
+    font-size: 1.1em;
+}
+
+/* Info and Warning Messages */
+.info-message {
+    background-color: #e0f7fa; /* Azul claro */
+    color: #00796b;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px auto; /* Centrar */
+    text-align: center;
+    max-width: 600px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+    .info-message .btn-primary {
+        margin-top: 15px;
+    }
+
+.warning-message {
+    background-color: #fffde7; /* Amarillo claro */
+    color: #fbc02d;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px auto;
+    text-align: center;
+    max-width: 600px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+    .warning-message i {
+        margin-right: 10px;
+    }
+
+/* Summary Cards (Overview Section) - Now are the Pet Cards */
+.pets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px; /* Más espacio */
+    margin-top: 30px;
+    width: 100%;
+    max-width: 900px; /* Limitar ancho del grid */
+}
+
+.pet-card {
+    background-color: #fdfdfd; /* Blanco brillante */
+    border-radius: 12px; /* Más redondeado */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15); /* Sombra más pronunciada */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #eee;
+}
+
+    .pet-card:hover {
+        transform: translateY(-7px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+.pet-card-header {
+    background-color: #e74c3c; /* Rojo principal */
+    color: white;
+    padding: 15px;
+    font-size: 1.3em;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.pet-card-body {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pet-card img {
+    width: 120px; /* Más grande */
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 4px solid #fff; /* Borde blanco alrededor de la foto */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.pet-card h3 {
+    color: #34495e;
+    font-size: 1.6em;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.pet-card p {
+    font-size: 0.95em;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+    .pet-card p strong {
+        color: #e74c3c;
+        margin-right: 5px;
+    }
+
+.pet-card-actions {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    border-top: 1px solid #f0f0f0;
+    background-color: #fafafa;
+}
+
+    .pet-card-actions button {
+        background: none;
+        border: none;
+        color: #3498db;
+        cursor: pointer;
+        font-size: 0.95em;
+        transition: color 0.3s ease, transform 0.2s ease;
+    }
+
+        .pet-card-actions button:hover {
+            color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+/* Forms General Styling */
+form {
+    margin-top: 20px;
+    background-color: #fdfdfd;
+    padding: 30px; /* Más padding */
+    border-radius: 10px; /* Más redondeado */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08); /* Sombra más suave */
+    width: 100%;
+    max-width: 700px; /* Limitar ancho del formulario */
+    box-sizing: border-box;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns by default */
+    gap: 25px; /* Más espacio */
+}
+
+.input-group {
+    margin-bottom: 0; /* Ya hay gap */
+    display: flex;
+    flex-direction: column;
+}
+
+    .input-group label {
+        font-weight: 700; /* Más negrita */
+        margin-bottom: 8px; /* Más espacio */
+        color: #34495e;
+        font-size: 0.95em;
+    }
+
+    .input-group input[type="text"],
+    .input-group input[type="email"],
+    .input-group input[type="password"],
+    .input-group input[type="number"],
+    .input-group input[type="date"],
+    .input-group input[type="time"],
+    .input-group input[type="tel"],
+    .input-group select,
+    .input-group textarea {
+        padding: 12px 15px; /* Más padding */
+        border: 1px solid #dcdcdc; /* Borde más claro */
+        border-radius: 6px;
+        font-size: 1em;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus {
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2); /* Sombra de enfoque roja */
+            outline: none;
+        }
+
+    .input-group input[type="file"] {
+        padding: 10px 0;
+    }
+
+    .input-group small {
+        font-size: 0.85em;
+        color: #777;
+        margin-top: 5px;
+    }
+
+    .input-group.checkbox-full-width, .input-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+
+    .checkbox-group input[type="checkbox"] {
+        margin-right: 10px;
+        transform: scale(1.3); /* Más grande */
+    }
+
+    .checkbox-group label {
+        margin-bottom: 0;
+        font-weight: normal; /* No negrita para las etiquetas de checkbox inline */
+    }
+
+.btn-primary, .btn-secondary {
+    padding: 12px 28px; /* Más padding */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.05em; /* Ligeramente más grande */
+    font-weight: 700; /* Más negrita */
+    margin-top: 25px; /* Más espacio superior */
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-primary {
+    background-color: #e74c3c;
+    color: white;
+}
+
+    .btn-primary:hover {
+        background-color: #c0392b;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+    margin-left: 15px;
+}
+
+    .btn-secondary:hover {
+        background-color: #7f8c8d;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+.form-messages {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    display: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+    .form-messages.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        display: block;
+    }
+
+    .form-messages.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        display: block;
+    }
+
+.error-message {
+    color: #e74c3c;
+    font-size: 0.88em;
+    margin-top: 5px;
+}
+
+/* Appointments List Styling */
+.appointments-list {
+    margin-top: 30px;
+    width: 100%;
+    max-width: 700px;
+}
+
+.appointment-card {
+    background-color: #fdfdfd;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #eee;
+}
+
+.appointment-info {
+    flex-grow: 1;
+}
+
+    .appointment-info h3 {
+        margin-top: 0;
+        color: #34495e;
+        font-size: 1.3em;
+        margin-bottom: 8px;
+    }
+
+    .appointment-info p {
+        font-size: 0.95em;
+        color: #555;
+        margin-bottom: 5px;
+    }
+
+        .appointment-info p strong {
+            color: #e74c3c;
+        }
+
+.appointment-status {
+    padding: 8px 15px;
+    border-radius: 20px; /* Forma de píldora */
+    font-weight: 700;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    white-space: nowrap; /* Evitar que se rompa */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.status-Pendiente {
+    background-color: #ffc107;
+    color: #333;
+}
+/* Amarillo más cálido */
+.status-Confirmado {
+    background-color: #28a745;
+    color: white;
+}
+/* Verde Bootstrap */
+.status-Cancelado {
+    background-color: #dc3545;
+    color: white;
+}
+/* Rojo Bootstrap */
+.status-Completado {
+    background-color: #6c757d;
+    color: white;
+}
+/* Gris oscuro */
+
+.appointment-actions {
+    margin-left: 25px;
+}
+
+    .appointment-actions button {
+        background-color: #007bff; /* Azul Bootstrap */
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .appointment-actions button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+/* Profile Section Styling (remains similar) */
+.profile-info {
+    background-color: #f0f0f0;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 700px;
+}
+
+    .profile-info p {
+        margin-bottom: 10px;
+        font-size: 1.1em;
+        color: #34495e;
+    }
+
+        .profile-info p strong {
+            color: #e74c3c;
+        }
+
+#editProfileFormContainer {
+    background-color: #fdfdfd;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 700px;
+}
+
+    #editProfileFormContainer h3 {
+        color: #34495e;
+        margin-bottom: 20px;
+    }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .client-dashboard-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        background-image: none; /* Quitar imagen en móviles */
+        background-color: #34495e;
+    }
+
+        .sidebar::before {
+            display: none;
+        }
+
+    .sidebar-header h2 {
+        font-size: 2.5em;
+    }
+
+    .sidebar-nav {
+        flex-direction: row; /* Botones en fila */
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px; /* Espacio entre botones */
+    }
+
+    .sidebar-button {
+        flex: 1 1 auto; /* Permite que los botones se expandan */
+        max-width: 48%; /* Dos botones por fila */
+        margin-bottom: 0; /* Resetea margin-bottom */
+    }
+
+    .main-content {
+        margin: 15px;
+        padding: 20px;
+    }
+
+    .main-title {
+        font-size: 2em;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr; /* Single column on smaller screens */
+    }
+
+    .input-group.checkbox-full-width, .input-group.full-width {
+        grid-column: auto;
+    }
+
+    .pet-card {
+        max-width: 350px; /* Limitar ancho en móvil */
+        margin: auto; /* Centrar */
+    }
+
+    .appointment-card {
+        flex-direction: column; /* Apilar en vertical */
+        align-items: flex-start;
+    }
+
+    .appointment-status {
+        margin-top: 10px;
+        align-self: flex-end; /* Alinear a la derecha */
+    }
+
+    .appointment-actions {
+        margin-left: 0;
+        margin-top: 15px;
+        width: 100%;
+        text-align: center;
+    }
+}

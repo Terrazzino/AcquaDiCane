@@ -1,0 +1,398 @@
+﻿/* Importar fuentes de Google Fonts: Dancing Script para el título y Montserrat para el texto */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700&display=swap');
+
+:root {
+    /* Colores inspirados en el ambiente de spa y mascotas */
+    --primary-text-color: #fff; /* Texto blanco sobre las imágenes */
+    --button-bg-color: rgba(255, 255, 255, 0.2); /* Fondo de botón semitransparente */
+    --button-border-color: rgba(255, 255, 255, 0.5); /* Borde de botón semitransparente */
+    --button-hover-bg: rgba(255, 255, 255, 0.4);
+    --overlay-color: rgba(0, 0, 0, 0.2); /* Oscurecimiento sutil para que el texto resalte */
+    --border-line-color: #ffffff; /* Borde blanco puro */
+    --border-line-width: 5px; /* Ancho del borde */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--primary-text-color);
+    line-height: 1.6;
+    overflow: hidden; /* Aseguramos que no haya scroll no deseado */
+}
+
+.split-container {
+    display: flex;
+    min-height: 100vh; /* Ocupa la altura completa de la ventana */
+    width: 100vw; /* Ocupa el ancho completo de la ventana */
+    position: relative; /* Para posicionar el título principal */
+}
+
+.split-half {
+    flex: 1; /* Ambas mitades ocuparán el mismo ancho */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s ease; /* Transición suave para futuros efectos */
+}
+
+    .split-half::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--overlay-color); /* Overlay oscuro para contraste */
+        transition: background-color 0.3s ease;
+    }
+
+/* Imágenes de fondo para cada mitad */
+.left-half {
+    background-image: url('../img/dog-spa-left.jpeg'); /* Golden Retriever con pepinos */
+    /* Añadimos un borde derecho para la separación */
+    border-right: var(--border-line-width) solid var(--border-line-color);
+}
+
+.right-half {
+    background-image: url('../img/dog-spa-right.jpeg'); /* Caniche con bata */
+    /* Añadimos un borde izquierdo para la separación */
+    border-left: var(--border-line-width) solid var(--border-line-color);
+}
+
+/* Contenido (botones) dentro de cada mitad */
+.content-wrapper {
+    position: relative; /* Para que el contenido esté por encima del overlay */
+    z-index: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column; /* Apila los elementos verticalmente */
+    justify-content: flex-end; /* Alinea los elementos al final (abajo) */
+    align-items: center; /* Centra horizontalmente */
+    height: 100%; /* Ocupa la altura del split-half para que flex-end funcione */
+    width: 100%; /* Ocupa el ancho del split-half */
+    padding-bottom: 50px; /* Agrega un padding inferior para que no quede pegado al borde */
+    transition: filter 0.5s ease-in-out; /* Transición para el blanco y negro */
+}
+
+/* ESTAS DOS REGLAS ABAJO SON IMPORTANTES: Controlan la visibilidad de los content-wrapper */
+/* Cuando un half-split está activo, su content-wrapper se oculta o se pone inactivo */
+.split-half.active .content-wrapper,
+.split-half.inactive .content-wrapper { /* Combino inactive con active para mejor control */
+    filter: grayscale(100%);
+    pointer-events: none; /* Deshabilita clics en contenido inactivo */
+    /* Puedes añadir display: none; aquí si quieres que desaparezca completamente */
+}
+
+/* Si quieres que los botones de Iniciar Sesión/Registrarme desaparezcan cuando el formulario aparece: */
+/* (Ya tienes esto en JS, pero es bueno tener una regla CSS de respaldo o complemento) */
+/* .content-wrapper button {
+    transition: opacity 0.5s ease;
+}
+.content-wrapper.inactive button {
+    opacity: 0;
+    pointer-events: none;
+} */
+
+
+/* Estilos para el contenedor del formulario de inicio de sesión */
+.login-form-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro para el formulario */
+    color: var(--primary-text-color);
+    padding: 30px;
+    border-radius: 10px;
+    z-index: 20; /* Asegurarse de que esté por encima de las imágenes */
+    /* *** CAMBIO CLAVE AQUÍ: Controlamos el display con la clase active *** */
+    display: none; /* Oculto por defecto */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s; /* Animación de aparición */
+    width: 80%;
+    max-width: 350px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); /* Sombra para el formulario */
+}
+
+    .login-form-container.active {
+        display: block; /* O 'flex' si el contenido interno del formulario usa flexbox */
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.5s ease-in-out, visibility 0s linear 0s;
+    }
+
+    .login-form-container .form-title {
+        font-family: 'Dancing Script', cursive;
+        font-size: 3em;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+        color: var(--primary-text-color); /* Asegura que el título del formulario sea blanco */
+    }
+
+/* Estilos para el contenedor del formulario de registro */
+.register-form-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro para el formulario */
+    color: var(--primary-text-color);
+    padding: 30px;
+    border-radius: 10px;
+    z-index: 20; /* Asegurarse de que esté por encima de las imágenes */
+    /* *** CAMBIO CLAVE AQUÍ: Controlamos el display con la clase active *** */
+    display: none; /* Oculto por defecto */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s; /* Animación de aparición */
+    width: 80%;
+    max-width: 380px; /* Un poco más ancho para los campos de registro */
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); /* Sombra para el formulario */
+    height: 90%; /* Para que no se salga de la pantalla en campos largos */
+    overflow-y: auto; /* Permite scroll si el contenido es muy largo */
+}
+
+    .register-form-container.active {
+        display: block; /* O 'flex' */
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.5s ease-in-out, visibility 0s linear 0s;
+    }
+
+    .register-form-container .form-title {
+        font-family: 'Dancing Script', cursive;
+        font-size: 3em;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+        color: var(--primary-text-color);
+    }
+
+    /* Estilos comunes para input groups (login y register) */
+    .login-form-container .input-group,
+    .register-form-container .input-group {
+        margin-bottom: 15px; /* Menos margen para más campos en registro */
+        text-align: left;
+    }
+
+    /* Estilos comunes para labels (login y register) */
+    .login-form-container label,
+    .register-form-container label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+
+    /* Estilos comunes para inputs (login y register) */
+    .login-form-container input,
+    .register-form-container input {
+        width: calc(100% - 30px); /* Ajustado por el icono de contraseña */
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #333;
+        font-size: 1em;
+    }
+
+    .register-form-container small { /* Específico para los pequeños textos de ayuda en registro */
+        display: block;
+        font-size: 0.75em;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 2px;
+        margin-left: 2px;
+    }
+
+.login-form-container .forgot-password {
+    text-align: right;
+    margin-bottom: 15px;
+}
+
+    .login-form-container .forgot-password a {
+        color: var(--primary-text-color);
+        text-decoration: none;
+        font-size: 0.8em;
+        transition: color 0.3s ease;
+    }
+
+        .login-form-container .forgot-password a:hover {
+            color: var(--button-border-color);
+        }
+
+/* Estilos comunes para botones primarios (login y register) */
+.login-form-container .btn-primary,
+.register-form-container .btn-primary {
+    background-color: var(--button-bg-color);
+    border: 2px solid var(--button-border-color);
+    color: var(--primary-text-color);
+    padding: 12px 25px;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 15px; /* Espacio superior para el botón de registro */
+}
+
+    .login-form-container .btn-primary:hover,
+    .register-form-container .btn-primary:hover {
+        background-color: var(--button-hover-bg);
+        transform: scale(1.02);
+    }
+
+
+/* Estilos para el TÍTULO PRINCIPAL FLOTANTE */
+.main-title-overlay {
+    position: absolute; /* Posicionamiento absoluto sobre el contenedor principal */
+    top: 50%; /* Centrado vertical */
+    left: 50%; /* Centrado horizontal */
+    transform: translate(-50%, -50%); /* Ajuste para centrarlo exactamente */
+    z-index: 10; /* Aseguramos que esté por encima de todo lo demás */
+    text-align: center;
+    padding: 20px;
+    transition: opacity 0.5s ease-in-out; /* Transición para ocultar/mostrar */
+    /* Asegurémonos de que esté visible inicialmente */
+    display: flex; /* O 'block' */
+    opacity: 1;
+}
+
+    .main-title-overlay h1 {
+        font-family: 'Dancing Script', cursive; /* Fuente elegante para el título */
+        font-size: 8em; /* Tamaño grande para el título principal */
+        color: var(--primary-text-color); /* Color blanco */
+        text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7); /* Sombra más pronunciada para resaltar */
+        line-height: 1; /* Eliminar espacio extra */
+        white-space: nowrap; /* Asegura que no se rompa en varias líneas */
+    }
+
+.btn-action {
+    background-color: var(--button-bg-color);
+    border: 2px solid var(--button-border-color);
+    color: var(--primary-text-color);
+    padding: 15px 35px;
+    border-radius: 50px; /* Botones redondeados para un look suave */
+    font-size: 1.2em;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px); /* Efecto de cristal esmerilado para el botón */
+    -webkit-backdrop-filter: blur(5px); /* Compatibilidad con Safari */
+}
+
+    .btn-action:hover {
+        background-color: var(--button-hover-bg);
+        border-color: var(--primary-text-color);
+        transform: scale(1.05);
+    }
+
+/* Estilos para mostrar/ocultar contraseña */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+    .password-input-wrapper input {
+        width: 100%; /* El input ocupa el 100% del wrapper */
+        padding-right: 40px; /* Espacio para el icono */
+    }
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    color: #ccc; /* Color del icono */
+    font-size: 1.2em;
+}
+
+
+.error-message {
+    color: #dc3545; /* Rojo */
+    font-size: 0.9em;
+    margin-top: 5px;
+    text-align: left; /* Opcional: alinear a la izquierda */
+}
+
+/* Responsividad para pantallas más pequeñas (tablets y celulares) */
+@media (max-width: 768px) {
+    .split-container {
+        flex-direction: column; /* Apila las secciones en lugar de dividirlas */
+    }
+
+    .split-half {
+        min-height: 50vh; /* Cada mitad ocupa la mitad de la altura de la ventana */
+        flex: none; /* Deshabilita flex-grow para que min-height funcione */
+        border-right: none; /* Quitamos el borde derecho en móviles */
+        border-left: none; /* Quitamos el borde izquierdo en móviles */
+        border-bottom: var(--border-line-width) solid var(--border-line-color); /* Agregamos borde inferior */
+    }
+
+    .main-title-overlay {
+        font-size: 1.5em; /* Reducir tamaño de fuente del título principal */
+        top: 0; /* Lo movemos arriba */
+        left: 0;
+        transform: none; /* Quitamos el translate */
+        width: 100%;
+        position: relative; /* Cambia a relativo para que fluya en el documento */
+        padding: 15px 0;
+        background-color: rgba(0, 0, 0, 0.5); /* Un fondo para que resalte */
+        text-shadow: none;
+    }
+
+        .main-title-overlay h1 {
+            font-size: 2.5em; /* Ajuste aún más el tamaño del h1 */
+            text-shadow: none; /* Quitar sombra para móviles si es necesario */
+        }
+
+    .btn-action {
+        padding: 12px 30px;
+        font-size: 1.1em;
+    }
+
+    .login-form-container,
+    .register-form-container { /* Común para ambos formularios en móvil */
+        width: 90%; /* Más ancho en móviles */
+        max-width: none; /* Quitamos el max-width */
+        font-size: 0.9em;
+        height: auto; /* Permite que el formulario se ajuste a su contenido */
+        max-height: 90vh; /* Limita la altura del formulario en pantallas pequeñas */
+        overflow-y: auto; /* Mantiene el scroll si es necesario */
+    }
+
+        .login-form-container .form-title,
+        .register-form-container .form-title {
+            font-size: 3em;
+        }
+}
+
+@media (max-width: 480px) {
+    .main-title-overlay h1 {
+        font-size: 2em; /* Ajuste para pantallas aún más pequeñas */
+    }
+
+    .login-form-container .form-title,
+    .register-form-container .form-title {
+        font-size: 2.5em;
+    }
+}
