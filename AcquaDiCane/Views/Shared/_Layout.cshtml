@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using AcquaDiCane.Models.Identity // Asegúrate de tener este using para AplicationUser
+@inject SignInManager<AplicationUser> SignInManager // <-- ¡Cambiado a AplicationUser!
+@inject UserManager<AplicationUser> UserManager // <-- ¡Cambiado a AplicationUser!
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
