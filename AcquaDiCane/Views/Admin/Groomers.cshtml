@@ -16,52 +16,25 @@
 </head>
 <body>
     <form id="logoutForm" method="post" action="/Account/Logout">
-        @Html.AntiForgeryToken() @* Añade el token antiforja aquí *@
+        @Html.AntiForgeryToken()
         <button class="btn-logout-fixed" type="submit" id="logoutButton">Cerrar Sesión</button>
     </form>
     <div class="admin-container">
         <h1 class="app-logo-outside">Gestionar Peluqueros</h1>
         <main class="admin-content-area">
-            <section class="service-form-section">
-                <h3>Registrar Nuevo Peluquero</h3>
-                <div class="input-group">
-                    <label for="groomerNameInput">Nombre:</label>
-                    <input type="text" id="groomerNameInput" placeholder="Nombre" required>
-                </div>
-                <div class="input-group">
-                    <label for="groomerApellidoInput">Apellido:</label>
-                    <input type="text" id="groomerApellidoInput" placeholder="Apellido" required>
-                </div>
-                <div class="input-group">
-                    <label for="groomerPhoneInput">Teléfono:</label>
-                    <input type="tel" id="groomerPhoneInput" placeholder="Ej: 341-xxxx-xxxx" required>
-                </div>
-                <div class="input-group">
-                    <label for="groomerEmailInput">Email:</label>
-                    <input type="email" id="groomerEmailInput" placeholder="ejemplo@email.com" required>
-                </div>
-                <div class="input-group">
-                    <label for="groomerBirthDateInput">Fecha de Nacimiento:</label>
-                    <input type="date" id="groomerBirthDateInput" required>
-                </div>
-                <div class="input-group">
-                    <label for="groomerDNIInput">DNI:</label>
-                    <input type="text" id="groomerDNIInput" placeholder="DNI sin puntos" required>
-                </div>
-                <button class="btn-primary" id="registerGroomerButton">Registrar Peluquero</button>
-            </section>
-
-            <section>
+            <section class="management-section">
                 <h3>Peluqueros Registrados</h3>
+                <button class="btn-primary" id="openAddGroomerModalButton">Registrar Nuevo Peluquero</button>
                 <table class="data-table" id="groomersTable">
                     <thead>
                         <tr>
                             <th>Nombre Completo</th>
                             <th>Teléfono</th>
                             <th>Email</th>
-                            <th>Fecha de Inicio</th>
-                            <th>Fecha de Nacimiento</th>
+                            <th>Fecha Nacimiento</th>
                             <th>DNI</th>
+                            <th>Activo</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -69,20 +42,13 @@
                 </table>
             </section>
 
-            <section class="selected-groomer-actions">
-                <p>Peluquero Seleccionado: <span id="selectedGroomerName" class="selected-name-display">Ninguno</span></p>
-                <div class="action-buttons-group">
-                    <button class="btn-info" id="modifyGroomerButton" disabled>Modificar</button>
-                    <button class="btn-warning" id="deleteGroomerButton" disabled>Eliminar</button>
-                </div>
-            </section>
-
             <div class="admin-actions-footer">
-                <button class="btn-secondary" onclick="location.href='@Url.Action("Inicio", "Admin")'">Volver al Menú Principal</button>
+                <button class="btn-secondary" onclick="location.href='@Url.Action("Dashboard", "Admin")'">Volver al Menú Principal</button>
             </div>
         </main>
     </div>
 
+    @* MODAL PRINCIPAL DEL PELUQUERO (ADD/EDIT) *@
     <div class="modal-overlay" id="groomerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -91,42 +57,56 @@
             </div>
             <div class="modal-body">
                 <form id="groomerForm">
+                    <input type="hidden" id="groomerId" name="Id" />
                     <div class="input-group">
-                        <label for="groomerNameInput">Nombre:</label>
-                        <input type="text" id="groomerNameInput" required>
+                        <label for="modalGroomerNombre">Nombre:</label>
+                        <input type="text" id="modalGroomerNombre" name="Nombre" required>
                     </div>
                     <div class="input-group">
-                        <label for="groomerApellidoInput">Apellido:</label>
-                        <input type="text" id="groomerApellidoInput" required>
+                        <label for="modalGroomerApellido">Apellido:</label>
+                        <input type="text" id="modalGroomerApellido" name="Apellido" required>
                     </div>
                     <div class="input-group">
-                        <label for="groomerPhoneInput">Teléfono:</label>
-                        <input type="tel" id="groomerPhoneInput" required>
+                        <label for="modalGroomerEmail">Email:</label>
+                        <input type="email" id="modalGroomerEmail" name="Email" required>
                     </div>
                     <div class="input-group">
-                        <label for="groomerEmailInput">Email:</label>
-                        <input type="email" id="groomerEmailInput" required>
+                        <label for="modalGroomerPhone">Teléfono:</label>
+                        <input type="tel" id="modalGroomerPhone" name="PhoneNumber" placeholder="Ej: 341-xxxx-xxxx" required>
                     </div>
                     <div class="input-group">
-                        <label for="groomerBirthDateInput">Fecha de Nacimiento:</label>
-                        <input type="date" id="groomerBirthDateInput" required>
+                        <label for="modalGroomerBirthDate">Fecha de Nacimiento:</label>
+                        <input type="date" id="modalGroomerBirthDate" name="FechaNacimiento" required>
                     </div>
                     <div class="input-group">
-                        <label for="groomerDNIInput">DNI:</label>
-                        <input type="text" id="groomerDNIInput" required>
+                        <label for="modalGroomerDNI">DNI:</label>
+                        <input type="text" id="modalGroomerDNI" name="DNI" placeholder="DNI sin puntos" required>
                     </div>
-                    <div class="input-group">
+                    <div class="input-group" id="modalGroomerPasswordGroup">
+                        <label for="modalGroomerPassword">Contraseña:</label>
+                        <input type="password" id="modalGroomerPassword" name="Password" required>
+                    </div>
+                    <div class="input-group" id="modalGroomerActivoGroup">
+                        <input type="checkbox" id="modalGroomerEstaActivo" name="EstaActivo" class="checkbox-style">
+                        <label for="modalGroomerEstaActivo">Está Activo</label>
+                    </div>
+
+                    <div class="modal-section-divider">
+                        <h4>Horario de Trabajo</h4>
+                        <p>Configure la disponibilidad semanal del peluquero.</p>
                         <button type="button" class="btn-secondary" id="configureCalendarButton">Configurar Horario</button>
                     </div>
+
                     <div class="modal-footer">
                         <button type="submit" class="btn-primary" id="saveGroomerButton">Guardar Cambios</button>
-                        <button type="button" class="btn-secondary" onclick="document.getElementById('groomerModal').classList.remove('active');">Cancelar</button>
+                        <button type="button" class="btn-secondary" id="cancelGroomerModalButton">Cancelar</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
+    @* MODAL DEL CALENDARIO *@
     <div class="modal-overlay" id="calendarModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -135,18 +115,20 @@
             </div>
             <div class="modal-body">
                 <form id="calendarForm">
-                    @foreach (var day in new string[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado" })
+                    @foreach (var day in new string[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo" })
                     {
-                        <div class="input-group">
+                        <div class="input-group calendar-day-item">
+                            @* Añadí una clase para un posible estilizado y semántica *@
                             <label>@day:</label>
-                            <input type="time" class="start-time-input" data-day="@day">
+                            <input type="checkbox" id="@(day.ToLower())Enable" class="enable-day-checkbox" data-day="@day">
+                            <input type="time" class="start-time-input" data-day="@day" disabled>
                             <span> - </span>
-                            <input type="time" class="end-time-input" data-day="@day">
+                            <input type="time" class="end-time-input" data-day="@day" disabled>
                         </div>
                     }
                     <div class="modal-footer">
                         <button type="submit" class="btn-primary">Guardar Horario</button>
-                        <button type="button" class="btn-secondary" onclick="document.getElementById('calendarModal').classList.remove('active');">Cancelar</button>
+                        <button type="button" class="btn-secondary" id="cancelCalendarModalButton">Cancelar</button>
                     </div>
                 </form>
             </div>

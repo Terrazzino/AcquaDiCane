@@ -1,527 +1,478 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+﻿// admin-scripts.js
 
-    // --- Lógica para Gestionar Servicios (admin-services.html) ---
-    const servicesTableBody = document.querySelector('#servicesTable tbody');
-    const selectedServiceNameSpan = document.getElementById('selectedServiceName');
-    const deleteServiceButton = document.getElementById('deleteServiceButton');
-    const modifyServiceButton = document.getElementById('modifyServiceButton');
-    const addServiceButton = document.getElementById('addServiceButton'); // Nuevo: Referencia al botón de agregar
+document.addEventListener('DOMContentLoaded', function () {
 
-    const serviceModal = document.getElementById('serviceModal');
-    const closeServiceModalButton = document.getElementById('closeServiceModalButton');
-    const serviceModalTitle = document.getElementById('serviceModalTitle');
-    const serviceForm = document.getElementById('serviceForm');
-    const modalServiceNameInput = document.getElementById('modalServiceNameInput');
-    const modalServicePriceInput = document.getElementById('modalServicePriceInput');
-    const saveServiceButton = document.getElementById('saveServiceButton');
+    // --- Configuración API ---
+    const API_BASE_URL = '/api/PeluqueroApi';
 
-    // Inicializa services como un array vacío. Los datos se agregarán dinámicamente.
-    let services = [];
-    let nextServiceId = 1; // El ID comienza en 1 ya que no hay datos preexistentes
-    let selectedServiceId = null;
-    let editingServiceId = null;
-
-    function renderServices() {
-        if (!servicesTableBody) return;
-
-        servicesTableBody.innerHTML = ''; // Limpia la tabla antes de renderizar
-        if (services.length === 0) {
-            // Opcional: Mostrar un mensaje si no hay servicios
-            const row = servicesTableBody.insertRow();
-            const cell = row.insertCell(0);
-            cell.colSpan = 2; // Cubre todas las columnas de la tabla
-            cell.textContent = 'No hay servicios registrados. Utilice el formulario superior para agregar uno.';
-            cell.style.textAlign = 'center';
-            cell.style.fontStyle = 'italic';
-            // Deshabilitar botones de modificar/eliminar si no hay servicios
-            if (deleteServiceButton) deleteServiceButton.disabled = true;
-            if (modifyServiceButton) modifyServiceButton.disabled = true;
-        } else {
-            services.forEach(service => {
-                const row = servicesTableBody.insertRow();
-                row.dataset.id = service.id;
-                row.classList.add('service-row');
-
-                row.insertCell(0).textContent = service.name;
-                row.insertCell(1).textContent = `$${service.price.toLocaleString('es-AR')}`;
-            });
-            addServiceRowEventListeners();
-            updateSelectedServiceDisplay();
-        }
-    }
-
-    function addServiceRowEventListeners() {
-        document.querySelectorAll('.service-row').forEach(row => {
-            row.removeEventListener('click', selectServiceRow);
-            row.addEventListener('click', selectServiceRow);
-        });
-    }
-
-    function selectServiceRow(event) {
-        document.querySelectorAll('.service-row').forEach(row => {
-            row.classList.remove('selected');
-        });
-
-        event.currentTarget.classList.add('selected');
-        selectedServiceId = parseInt(event.currentTarget.dataset.id);
-        updateSelectedServiceDisplay();
-    }
-
-    function updateSelectedServiceDisplay() {
-        if (!selectedServiceNameSpan || !deleteServiceButton || !modifyServiceButton) return;
-
-        if (selectedServiceId) {
-            const service = services.find(s => s.id === selectedServiceId);
-            if (service) {
-                selectedServiceNameSpan.textContent = service.name;
-                deleteServiceButton.disabled = false;
-                modifyServiceButton.disabled = false;
-            } else {
-                selectedServiceNameSpan.textContent = 'No encontrado';
-                selectedServiceId = null;
-                deleteServiceButton.disabled = true;
-                modifyServiceButton.disabled = true;
-            }
-        } else {
-            selectedServiceNameSpan.textContent = 'Ninguno';
-            deleteServiceButton.disabled = true;
-            modifyServiceButton.disabled = true;
-        }
-    }
-
-    function addServiceFromForm() {
-        const nameInput = document.getElementById('serviceName');
-        const priceInput = document.getElementById('servicePrice');
-
-        if (!nameInput || !priceInput) return;
-
-        const name = nameInput.value.trim();
-        const price = parseInt(priceInput.value);
-
-        if (name && !isNaN(price) && price > 0) {
-            services.push({ id: nextServiceId++, name: name, price: price });
-            renderServices();
-            nameInput.value = '';
-            priceInput.value = '';
-        } else {
-            alert('Por favor, ingrese un nombre de servicio y un precio válido para agregar.');
-        }
-    }
-
-    function openEditServiceModal() {
-        if (!selectedServiceId) {
-            alert('Por favor, seleccione un servicio de la tabla para modificar.');
-            return;
-        }
-        if (!serviceModalTitle || !modalServiceNameInput || !modalServicePriceInput || !serviceModal) return;
-
-        serviceModalTitle.textContent = 'Modificar Servicio';
-        editingServiceId = selectedServiceId;
-        const service = services.find(s => s.id === editingServiceId);
-
-        if (service) {
-            modalServiceNameInput.value = service.name;
-            modalServicePriceInput.value = service.price;
-            serviceModal.classList.add('active');
-        } else {
-            alert('Error: Servicio no encontrado.');
-            selectedServiceId = null;
-            updateSelectedServiceDisplay();
-        }
-    }
-
-    function deleteSelectedService() {
-        if (!selectedServiceId) {
-            alert('Por favor, seleccione un servicio de la tabla para eliminar.');
-            return;
-        }
-
-        const serviceToDelete = services.find(s => s.id === selectedServiceId);
-        if (serviceToDelete && confirm(`¿Está seguro de que desea eliminar el servicio "${serviceToDelete.name}"?`)) {
-            services = services.filter(s => s.id !== selectedServiceId);
-            renderServices();
-            selectedServiceId = null;
-            updateSelectedServiceDisplay();
-        }
-    }
-
-    function saveServiceFromModal(event) {
-        event.preventDefault();
-
-        if (!modalServiceNameInput || !modalServicePriceInput || !serviceModal) return;
-
-        const name = modalServiceNameInput.value.trim();
-        const price = parseInt(modalServicePriceInput.value);
-
-        if (name && !isNaN(price) && price > 0) {
-            if (editingServiceId) {
-                const serviceIndex = services.findIndex(s => s.id === editingServiceId);
-                if (serviceIndex !== -1) {
-                    services[serviceIndex] = { id: editingServiceId, name, price };
-                }
-            }
-            renderServices();
-            hideServiceModal();
-            selectedServiceId = null;
-            updateSelectedServiceDisplay();
-        } else {
-            alert('Por favor, complete todos los campos con valores válidos.');
-        }
-    }
-
-    function hideServiceModal() {
-        if (serviceModal) serviceModal.classList.remove('active');
-    }
-
-    // Inicialización y Listeners para Servicios (solo si los elementos existen en la página)
-    if (addServiceButton) { // Usamos un elemento presente solo en la página de servicios
-        addServiceButton.addEventListener('click', addServiceFromForm);
-        if (deleteServiceButton) deleteServiceButton.addEventListener('click', deleteSelectedService);
-        if (modifyServiceButton) modifyServiceButton.addEventListener('click', openEditServiceModal);
-
-        if (closeServiceModalButton) closeServiceModalButton.addEventListener('click', hideServiceModal);
-        if (serviceModal) {
-            serviceModal.addEventListener('click', function (event) {
-                if (event.target === serviceModal) {
-                    hideServiceModal();
-                }
-            });
-        }
-        if (serviceForm) serviceForm.addEventListener('submit', saveServiceFromModal);
-
-        renderServices(); // Renderiza los servicios al cargar la página (inicialmente vacío)
-    }
-
-
-    // --- Lógica para Gestionar Peluqueros (admin-groomers.html) ---
-    const registerGroomerButton = document.getElementById('registerGroomerButton');
+    // --- Referencias a elementos del DOM ---
+    const openAddGroomerModalButton = document.getElementById('openAddGroomerModalButton');
     const groomersTableBody = document.querySelector('#groomersTable tbody');
+
+    // Elementos del Modal de Peluquero (ADD/EDIT)
     const groomerModal = document.getElementById('groomerModal');
     const closeGroomerModalButton = document.getElementById('closeGroomerModalButton');
     const groomerModalTitle = document.getElementById('groomerModalTitle');
     const groomerForm = document.getElementById('groomerForm');
-    const groomerNameInput = document.getElementById('groomerNameInput');
-    const groomerApellidoInput = document.getElementById('groomerApellidoInput');
-    const groomerPhoneInput = document.getElementById('groomerPhoneInput');
-    const groomerEmailInput = document.getElementById('groomerEmailInput');
-    const groomerBirthDateInput = document.getElementById('groomerBirthDateInput');
-    const groomerDNIInput = document.getElementById('groomerDNIInput');
-    const configureCalendarButton = document.getElementById('configureCalendarButton');
+    const groomerIdInput = document.getElementById('groomerId');
+
+    const modalGroomerNombreInput = document.getElementById('modalGroomerNombre');
+    const modalGroomerApellidoInput = document.getElementById('modalGroomerApellido');
+    const modalGroomerEmailInput = document.getElementById('modalGroomerEmail');
+    const modalGroomerPhoneInput = document.getElementById('modalGroomerPhone');
+    const modalGroomerBirthDateInput = document.getElementById('modalGroomerBirthDate');
+    const modalGroomerDNIInput = document.getElementById('modalGroomerDNI');
+
+    const modalGroomerPasswordGroup = document.getElementById('modalGroomerPasswordGroup');
+    const modalGroomerPasswordInput = document.getElementById('modalGroomerPassword');
+    const modalGroomerActivoGroup = document.getElementById('modalGroomerActivoGroup');
+    const modalGroomerEstaActivoCheckbox = document.getElementById('modalGroomerEstaActivo');
+
     const saveGroomerButton = document.getElementById('saveGroomerButton');
+    const cancelGroomerModalButton = document.getElementById('cancelGroomerModalButton');
 
-    const selectedGroomerNameSpan = document.getElementById('selectedGroomerName');
-    const deleteGroomerButton = document.getElementById('deleteGroomerButton');
-    const modifyGroomerButton = document.getElementById('modifyGroomerButton');
-
+    // Elementos del Modal de Calendario
     const calendarModal = document.getElementById('calendarModal');
     const closeCalendarModalButton = document.getElementById('closeCalendarModalButton');
     const calendarForm = document.getElementById('calendarForm');
+    const configureCalendarButton = document.getElementById('configureCalendarButton');
 
-    // Inicializa groomers como un array vacío. Los datos se agregarán dinámicamente.
-    let groomers = [];
-    let nextGroomerId = 1; // El ID comienza en 1
-    let selectedGroomerId = null;
-    let editingGroomerId = null;
+    // Variable para almacenar el horario del peluquero mientras se edita o crea
+    // Formato: { "Lunes": { start: "09:00", end: "17:00" }, "Martes": { start: "10:00", end: "18:00" }, ... }
     let currentGroomerCalendar = {};
 
-    function renderGroomers() {
-        if (!groomersTableBody) return;
+    const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']; // Añadido Domingo
 
-        groomersTableBody.innerHTML = ''; // Limpia la tabla antes de renderizar
-        if (groomers.length === 0) {
-            // Opcional: Mostrar un mensaje si no hay peluqueros
-            const row = groomersTableBody.insertRow();
-            const cell = row.insertCell(0);
-            cell.colSpan = 6; // Cubre todas las columnas de la tabla
-            cell.textContent = 'No hay peluqueros registrados. Utilice el formulario superior para agregar uno.';
-            cell.style.textAlign = 'center';
-            cell.style.fontStyle = 'italic';
-            // Deshabilitar botones de modificar/eliminar si no hay peluqueros
-            if (deleteGroomerButton) deleteGroomerButton.disabled = true;
-            if (modifyGroomerButton) modifyGroomerButton.disabled = true;
-        } else {
-            groomers.forEach(groomer => {
-                const row = groomersTableBody.insertRow();
-                row.dataset.id = groomer.id;
-                row.classList.add('groomer-row');
 
-                row.insertCell(0).textContent = `${groomer.name} ${groomer.apellido}`;
-                row.insertCell(1).textContent = groomer.phone;
-                row.insertCell(2).textContent = groomer.email;
-                row.insertCell(3).textContent = "N/A"; // Fecha de Inicio (como en tu ejemplo, si no hay campo)
-                row.insertCell(4).textContent = formatDateForDisplay(groomer.birthDate);
-                row.insertCell(5).textContent = groomer.dni;
-            });
-            addGroomerRowEventListeners();
-            updateSelectedGroomerDisplay();
+    // --- Funciones de Utilidad (Centralizadas para API y Modales) ---
+
+    // Función de ayuda para obtener el token JWT (si lo usas para autenticación)
+    function getAuthToken() {
+        // Implementa la lógica para obtener tu token JWT (ej. de localStorage)
+        // return localStorage.getItem('authToken');
+        return null; // Por ahora, devuelve null si no usas JWT o aún no lo implementas
+    }
+
+    // Función centralizada para realizar solicitudes a la API
+    async function makeApiRequest(url, method, data = null) {
+        const token = getAuthToken();
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        };
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
         }
-    }
 
-    function addGroomerRowEventListeners() {
-        document.querySelectorAll('.groomer-row').forEach(row => {
-            row.removeEventListener('click', selectGroomerRow);
-            row.addEventListener('click', selectGroomerRow);
-        });
-    }
+        const config = {
+            method: method,
+            headers: headers,
+        };
 
-    function selectGroomerRow(event) {
-        document.querySelectorAll('.groomer-row').forEach(row => {
-            row.classList.remove('selected');
-        });
+        if (data) {
+            config.body = JSON.stringify(data);
+        }
 
-        event.currentTarget.classList.add('selected');
-        selectedGroomerId = parseInt(event.currentTarget.dataset.id);
-        updateSelectedGroomerDisplay();
-    }
+        try {
+            const response = await fetch(url, config);
 
-    function updateSelectedGroomerDisplay() {
-        if (!selectedGroomerNameSpan || !deleteGroomerButton || !modifyGroomerButton) return;
-
-        if (selectedGroomerId) {
-            const groomer = groomers.find(g => g.id === selectedGroomerId);
-            if (groomer) {
-                selectedGroomerNameSpan.textContent = `${groomer.name} ${groomer.apellido}`;
-                deleteGroomerButton.disabled = false;
-                modifyGroomerButton.disabled = false;
-            } else {
-                selectedGroomerNameSpan.textContent = 'No encontrado';
-                selectedGroomerId = null;
-                deleteGroomerButton.disabled = true;
-                modifyGroomerButton.disabled = true;
+            // Si es 204 No Content (DELETE/PUT exitoso sin retorno)
+            if (response.status === 204) {
+                return null;
             }
-        } else {
-            selectedGroomerNameSpan.textContent = 'Ninguno';
-            deleteGroomerButton.disabled = true;
-            modifyGroomerButton.disabled = true;
-        }
-    }
 
-    function openRegisterGroomerModal() {
-        if (!groomerModalTitle || !groomerForm || !groomerModal) return;
+            const responseData = await response.json();
 
-        groomerModalTitle.textContent = 'Registrar Peluquero';
-        groomerForm.reset();
-        editingGroomerId = null;
-        currentGroomerCalendar = {};
-        groomerModal.classList.add('active');
-    }
-
-    function openEditGroomerModal() {
-        if (!selectedGroomerId) {
-            alert('Por favor, seleccione un peluquero de la tabla para modificar.');
-            return;
-        }
-        if (!groomerModalTitle || !groomerNameInput || !groomerApellidoInput || !groomerPhoneInput ||
-            !groomerEmailInput || !groomerBirthDateInput || !groomerDNIInput || !groomerModal) return;
-
-        groomerModalTitle.textContent = 'Modificar Peluquero';
-        editingGroomerId = selectedGroomerId;
-        const groomer = groomers.find(g => g.id === editingGroomerId);
-
-        if (groomer) {
-            groomerNameInput.value = groomer.name;
-            groomerApellidoInput.value = groomer.apellido;
-            groomerPhoneInput.value = groomer.phone;
-            groomerEmailInput.value = groomer.email;
-            groomerBirthDateInput.value = groomer.birthDate;
-            groomerDNIInput.value = groomer.dni;
-            currentGroomerCalendar = JSON.parse(JSON.stringify(groomer.calendar || {}));
-            groomerModal.classList.add('active');
-        } else {
-            alert('Error: Peluquero no encontrado.');
-            selectedGroomerId = null;
-            updateSelectedGroomerDisplay();
-        }
-    }
-
-    function saveGroomer(event) {
-        event.preventDefault();
-
-        if (!groomerNameInput || !groomerApellidoInput || !groomerPhoneInput || !groomerEmailInput ||
-            !groomerBirthDateInput || !groomerDNIInput || !groomerModal) return;
-
-        const name = groomerNameInput.value.trim();
-        const apellido = groomerApellidoInput.value.trim();
-        const phone = groomerPhoneInput.value.trim();
-        const email = groomerEmailInput.value.trim();
-        const birthDate = groomerBirthDateInput.value;
-        const dni = groomerDNIInput.value.trim();
-
-        if (!name || !apellido || !phone || !email || !birthDate || !dni) {
-            alert('Por favor, complete todos los campos del formulario de registro.');
-            return;
-        }
-
-        const hasValidSchedule = Object.values(currentGroomerCalendar).some(day => day.start && day.end);
-        if (!hasValidSchedule) {
-            alert('Debe configurar al menos un día de trabajo con horarios válidos para el peluquero.');
-            return;
-        }
-
-        if (editingGroomerId) {
-            const groomerIndex = groomers.findIndex(g => g.id === editingGroomerId);
-            if (groomerIndex !== -1) {
-                groomers[groomerIndex] = {
-                    id: editingGroomerId,
-                    name,
-                    apellido,
-                    phone,
-                    email,
-                    birthDate,
-                    dni,
-                    calendar: currentGroomerCalendar
-                };
+            if (!response.ok) {
+                let errorMessage = `Error: ${response.status} ${response.statusText}`;
+                if (responseData && typeof responseData === 'object') {
+                    if (responseData.errors) { // Errores de ModelState o Identity (C#)
+                        // Para ModelState errors (objeto donde cada clave es un campo con un array de errores)
+                        const modelErrors = Object.values(responseData.errors).flat();
+                        if (modelErrors.length > 0) {
+                            errorMessage = modelErrors.join(', ');
+                        } else if (Array.isArray(responseData)) { // Para errores de Identity (array de strings)
+                            errorMessage = responseData.join('\n');
+                        }
+                    } else if (responseData.message) { // Mensajes de error personalizados
+                        errorMessage = responseData.message;
+                    }
+                } else if (typeof responseData === 'string') { // Si la respuesta es solo texto de error
+                    errorMessage = responseData;
+                }
+                throw new Error(errorMessage);
             }
-        } else {
-            groomers.push({
-                id: nextGroomerId++,
-                name,
-                apellido,
-                phone,
-                email,
-                birthDate,
-                dni,
-                calendar: currentGroomerCalendar
-            });
-        }
-        renderGroomers();
-        hideGroomerModal();
-        selectedGroomerId = null;
-        updateSelectedGroomerDisplay();
-    }
 
-    function deleteSelectedGroomer() {
-        if (!selectedGroomerId) {
-            alert('Por favor, seleccione un peluquero de la tabla para eliminar.');
-            return;
-        }
-
-        const groomerToDelete = groomers.find(g => g.id === selectedGroomerId);
-        if (groomerToDelete && confirm(`¿Está seguro de que desea eliminar a ${groomerToDelete.name} ${groomerToDelete.apellido}?`)) {
-            groomers = groomers.filter(g => g.id !== selectedGroomerId);
-            renderGroomers();
-            selectedGroomerId = null;
-            updateSelectedGroomerDisplay();
+            return responseData;
+        } catch (error) {
+            console.error('Error en la solicitud a la API:', error);
+            throw error; // Re-lanza el error para que sea manejado por la función que llama
         }
     }
 
-    function hideGroomerModal() {
-        if (groomerModal) groomerModal.classList.remove('active');
+
+    function showModal(modalElement) {
+        modalElement.classList.add('active');
+    }
+
+    function hideModal(modalElement) {
+        modalElement.classList.remove('active');
     }
 
     function formatDateForDisplay(dateString) {
         if (!dateString) return '';
+        // Asumiendo que la API devuelve fechas en formato YYYY-MM-DD
         const parts = dateString.split('-');
-        if (parts.length === 3 && parts[0].length === 4 && parts[1].length === 2 && parts[2].length === 2) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
         }
         return dateString;
     }
 
-    const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    // --- Cargar Peluqueros (READ) ---
+    async function loadGroomers() {
+        if (!groomersTableBody) return;
 
-    function openCalendarModal() {
-        if (!calendarModal) return;
-        calendarModal.classList.add('active');
-        populateCalendarForm();
+        try {
+            const peluqueros = await makeApiRequest(API_BASE_URL, 'GET');
+
+            groomersTableBody.innerHTML = '';
+
+            if (peluqueros.length === 0) {
+                const row = groomersTableBody.insertRow();
+                const cell = row.insertCell(0);
+                cell.colSpan = 7;
+                cell.textContent = 'No hay peluqueros registrados.';
+                cell.style.textAlign = 'center';
+                cell.style.fontStyle = 'italic';
+                return;
+            }
+
+            peluqueros.forEach(peluquero => {
+                const row = groomersTableBody.insertRow();
+                row.insertCell(0).textContent = `${peluquero.nombre} ${peluquero.apellido}`;
+                row.insertCell(1).textContent = peluquero.phoneNumber || 'N/A';
+                row.insertCell(2).textContent = peluquero.email;
+                row.insertCell(3).textContent = formatDateForDisplay(peluquero.fechaNacimiento);
+                row.insertCell(4).textContent = peluquero.dni;
+                row.insertCell(5).textContent = peluquero.estaActivo ? 'Sí' : 'No';
+
+                const actionsCell = row.insertCell(6);
+                const editButton = document.createElement('button');
+                editButton.classList.add('btn-info', 'edit-groomer-btn');
+                editButton.textContent = 'Modificar';
+                editButton.dataset.id = peluquero.id;
+                actionsCell.appendChild(editButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('btn-warning', 'delete-groomer-btn');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.dataset.id = peluquero.id;
+                actionsCell.appendChild(deleteButton);
+            });
+
+            document.querySelectorAll('.edit-groomer-btn').forEach(button => {
+                button.addEventListener('click', (e) => editGroomer(e.target.dataset.id));
+            });
+            document.querySelectorAll('.delete-groomer-btn').forEach(button => {
+                button.addEventListener('click', (e) => deleteGroomer(e.target.dataset.id));
+            });
+
+        } catch (error) {
+            console.error('Error al cargar peluqueros:', error);
+            groomersTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar peluqueros: ${error.message}</td></tr>`;
+        }
     }
 
-    function closeCalendarModal() {
-        if (calendarModal) calendarModal.classList.remove('active');
+    // --- Abrir Modal para Agregar Peluquero ---
+    if (openAddGroomerModalButton) {
+        openAddGroomerModalButton.addEventListener('click', () => {
+            groomerForm.reset();
+            groomerIdInput.value = '';
+            groomerModalTitle.textContent = 'Registrar Nuevo Peluquero';
+
+            modalGroomerPasswordGroup.style.display = 'block';
+            modalGroomerPasswordInput.setAttribute('required', 'required');
+            modalGroomerPasswordInput.value = '';
+
+            modalGroomerActivoGroup.style.display = 'none';
+            modalGroomerEstaActivoCheckbox.checked = true;
+
+            currentGroomerCalendar = {}; // Limpiar calendario para un nuevo peluquero
+            populateCalendarForm(); // Asegurarse de que el modal de calendario se reinicie también
+
+            showModal(groomerModal);
+        });
     }
 
-    function populateCalendarForm() {
-        daysOfWeek.forEach(day => {
-            const startTimeInput = document.querySelector(`.start-time-input[data-day="${day}"]`);
-            const endTimeInput = document.querySelector(`.end-time-input[data-day="${day}"]`);
+    // --- Abrir Modal para Editar Peluquero ---
+    async function editGroomer(id) {
+        try {
+            const peluquero = await makeApiRequest(`${API_BASE_URL}/${id}`, 'GET');
 
-            if (startTimeInput && endTimeInput) {
-                startTimeInput.value = currentGroomerCalendar[day]?.start || '';
-                endTimeInput.value = currentGroomerCalendar[day]?.end || '';
+            groomerIdInput.value = peluquero.id;
+            modalGroomerNombreInput.value = peluquero.nombre;
+            modalGroomerApellidoInput.value = peluquero.apellido;
+            modalGroomerEmailInput.value = peluquero.email;
+            modalGroomerPhoneInput.value = peluquero.phoneNumber;
+            modalGroomerBirthDateInput.value = peluquero.fechaNacimiento; // Ya debería venir en YYYY-MM-DD
+            modalGroomerDNIInput.value = peluquero.dni;
+            modalGroomerEstaActivoCheckbox.checked = peluquero.estaActivo;
+
+            groomerModalTitle.textContent = `Editar Peluquero: ${peluquero.nombre} ${peluquero.apellido}`;
+
+            modalGroomerPasswordGroup.style.display = 'none';
+            modalGroomerPasswordInput.removeAttribute('required');
+            modalGroomerPasswordInput.value = '';
+
+            modalGroomerActivoGroup.style.display = 'block';
+
+            // Cargar el calendario existente del peluquero desde JornadasSemanales
+            currentGroomerCalendar = {};
+            if (peluquero.jornadasSemanales && peluquero.jornadasSemanales.length > 0) {
+                peluquero.jornadasSemanales.forEach(jornada => {
+                    currentGroomerCalendar[jornada.dia] = {
+                        start: jornada.horaInicio,
+                        end: jornada.horaFinal
+                    };
+                });
+            }
+            populateCalendarForm(); // Rellenar el formulario del calendario
+
+            showModal(groomerModal);
+
+        } catch (error) {
+            console.error('Error al cargar datos del peluquero para edición:', error);
+            alert(`No se pudo cargar el peluquero para editar: ${error.message}`);
+        }
+    }
+
+    // --- Enviar Formulario (CREATE/UPDATE) ---
+    if (groomerForm) {
+        groomerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = groomerIdInput.value;
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API_BASE_URL}/${id}` : API_BASE_URL;
+
+            // Transformar currentGroomerCalendar en el formato JornadasSemanales esperado por la API
+            const jornadasSemanalesToSend = [];
+            for (const day of daysOfWeek) {
+                if (currentGroomerCalendar[day] && currentGroomerCalendar[day].start && currentGroomerCalendar[day].end) {
+                    jornadasSemanalesToSend.push({
+                        Dia: day,
+                        HoraInicio: currentGroomerCalendar[day].start,
+                        HoraFinal: currentGroomerCalendar[day].end
+                    });
+                }
+            }
+
+            // Validación de que al menos un día tenga horario configurado
+            if (jornadasSemanalesToSend.length === 0) {
+                alert('Debe configurar al menos un día de trabajo con horarios válidos para el peluquero.');
+                return;
+            }
+
+            const formData = {
+                Id: id ? parseInt(id) : 0,
+                Nombre: modalGroomerNombreInput.value,
+                Apellido: modalGroomerApellidoInput.value,
+                Email: modalGroomerEmailInput.value,
+                PhoneNumber: modalGroomerPhoneInput.value,
+                DNI: modalGroomerDNIInput.value,
+                FechaNacimiento: modalGroomerBirthDateInput.value,
+                EstaActivo: id ? modalGroomerEstaActivoCheckbox.checked : true,
+                JornadasSemanales: jornadasSemanalesToSend // ¡Aquí está el cambio clave!
+            };
+
+            if (!id) {
+                formData.Password = modalGroomerPasswordInput.value;
+                if (!formData.Password) {
+                    alert('La contraseña es requerida para un nuevo peluquero.');
+                    return;
+                }
+            }
+
+            try {
+                const response = await makeApiRequest(url, method, formData);
+
+                hideModal(groomerModal);
+                alert(`Peluquero ${id ? 'actualizado' : 'registrado'} con éxito.`);
+                loadGroomers();
+
+            } catch (error) {
+                console.error('Error al guardar peluquero:', error);
+                alert(`Error al guardar peluquero: ${error.message}`);
             }
         });
     }
 
-    function saveCalendar(event) {
-        event.preventDefault();
-
-        let hasValidEntry = false;
-        const tempCalendar = {};
-
-        for (const day of daysOfWeek) {
-            const startTimeInput = document.querySelector(`.start-time-input[data-day="${day}"]`);
-            const endTimeInput = document.querySelector(`.end-time-input[data-day="${day}"]`);
-
-            if (!startTimeInput || !endTimeInput) {
-                alert('Error: Elementos de horario no encontrados para un día.');
-                return;
-            }
-
-            const start = startTimeInput.value;
-            const end = endTimeInput.value;
-
-            if (start && end) {
-                if (start >= end) {
-                    alert(`El horario de finalización para ${day} (${end}) debe ser posterior al horario de inicio (${start}).`);
-                    return;
-                }
-                tempCalendar[day] = { start, end };
-                hasValidEntry = true;
-            } else if (!start && !end) {
-                tempCalendar[day] = { start: '', end: '' };
-            } else {
-                alert(`Para ${day}, debe completar ambos campos de horario (inicio y fin) o dejar ambos vacíos para un día libre.`);
-                return;
-            }
-        }
-
-        if (!hasValidEntry) {
-            alert('Debe configurar al menos un día de trabajo con horarios válidos.');
+    // --- Eliminar Peluquero (DELETE) ---
+    async function deleteGroomer(id) {
+        if (!confirm('¿Estás seguro de que quieres eliminar este peluquero? Esto también eliminará su cuenta de usuario y no se puede deshacer.')) {
             return;
         }
 
-        currentGroomerCalendar = tempCalendar;
-        closeCalendarModal();
+        try {
+            await makeApiRequest(`${API_BASE_URL}/${id}`, 'DELETE');
+            alert('Peluquero eliminado con éxito.');
+            loadGroomers();
+        } catch (error) {
+            console.error('Error al eliminar peluquero:', error);
+            alert(`Error al eliminar peluquero: ${error.message}`);
+        }
     }
 
-
-    // --- Lógica del Botón de Cerrar Sesión (global, en cualquier página de admin) ---
-    // El botón de logout ahora está dentro de un formulario en el HTML
-    // y se envía directamente al hacer click. El JS ya no necesita crear el formulario.
-    const logoutForm = document.getElementById('logoutForm');
-    if (logoutForm) {
-        // No se necesita un listener específico para el botón si ya es type="submit" dentro del formulario
-        // que tiene el action de logout y el antiforja. El navegador manejará el envío.
+    // --- Cerrar Modales ---
+    if (closeGroomerModalButton) {
+        closeGroomerModalButton.addEventListener('click', () => {
+            hideModal(groomerModal);
+        });
     }
 
+    if (cancelGroomerModalButton) {
+        cancelGroomerModalButton.addEventListener('click', () => {
+            hideModal(groomerModal);
+        });
+    }
 
-    // Inicialización y Listeners para Peluqueros (solo si los elementos existen en la página)
-    if (registerGroomerButton) {
-        registerGroomerButton.addEventListener('click', openRegisterGroomerModal);
-        if (closeGroomerModalButton) closeGroomerModalButton.addEventListener('click', hideGroomerModal);
-        if (groomerModal) {
-            groomerModal.addEventListener('click', function (event) {
-                if (event.target === groomerModal) {
-                    hideGroomerModal();
+    if (groomerModal) {
+        groomerModal.addEventListener('click', function (event) {
+            if (event.target === groomerModal) {
+                hideModal(groomerModal);
+            }
+        });
+    }
+
+    // --- Lógica del Modal de Calendario ---
+
+    // Abrir Modal de Calendario
+    if (configureCalendarButton) {
+        configureCalendarButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            showModal(calendarModal);
+            populateCalendarForm();
+        });
+    }
+
+    // Cerrar Modal de Calendario
+    if (closeCalendarModalButton) {
+        closeCalendarModalButton.addEventListener('click', () => {
+            hideModal(calendarModal);
+        });
+    }
+
+    if (calendarModal) {
+        calendarModal.addEventListener('click', function (event) {
+            if (event.target === calendarModal) {
+                hideModal(calendarModal);
+            }
+        });
+    }
+
+    // Llenar el formulario de calendario con los datos de currentGroomerCalendar
+    function populateCalendarForm() {
+        daysOfWeek.forEach(day => {
+            const startTimeInput = document.querySelector(`.start-time-input[data-day="${day}"]`);
+            const endTimeInput = document.querySelector(`.end-time-input[data-day="${day}"]`);
+            const enabledCheckbox = document.querySelector(`.enable-day-checkbox[data-day="${day}"]`);
+
+            if (startTimeInput && endTimeInput && enabledCheckbox) {
+                const daySchedule = currentGroomerCalendar[day];
+                if (daySchedule && daySchedule.start && daySchedule.end) {
+                    startTimeInput.value = daySchedule.start;
+                    endTimeInput.value = daySchedule.end;
+                    enabledCheckbox.checked = true;
+                    startTimeInput.disabled = false;
+                    endTimeInput.disabled = false;
+                } else {
+                    startTimeInput.value = '';
+                    endTimeInput.value = '';
+                    enabledCheckbox.checked = false;
+                    startTimeInput.disabled = true;
+                    endTimeInput.disabled = true;
+                }
+            }
+        });
+    }
+
+    // Guardar Horario desde el Modal de Calendario
+    if (calendarForm) {
+        calendarForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            let hasValidEntry = false;
+            const tempCalendar = {}; // Usar un objeto temporal para la nueva configuración
+
+            for (const day of daysOfWeek) {
+                const startTimeInput = document.querySelector(`.start-time-input[data-day="${day}"]`);
+                const endTimeInput = document.querySelector(`.end-time-input[data-day="${day}"]`);
+                const enabledCheckbox = document.querySelector(`.enable-day-checkbox[data-day="${day}"]`); // Obtener el checkbox
+
+                if (!startTimeInput || !endTimeInput || !enabledCheckbox) {
+                    alert('Error: Elementos de horario no encontrados para un día. Recargue la página.');
+                    return;
+                }
+
+                if (enabledCheckbox.checked) { // Solo procesar si el día está habilitado
+                    const start = startTimeInput.value;
+                    const end = endTimeInput.value;
+
+                    if (start && end) {
+                        if (start >= end) {
+                            alert(`El horario de finalización para ${day} (${end}) debe ser posterior al horario de inicio (${start}).`);
+                            return;
+                        }
+                        tempCalendar[day] = { start, end };
+                        hasValidEntry = true;
+                    } else {
+                        // Si el checkbox está marcado pero faltan horas, es un error
+                        alert(`Para ${day}, si el día está habilitado, debe completar ambos campos de horario (inicio y fin).`);
+                        return;
+                    }
+                } else {
+                    // Si el día no está habilitado, se registra como vacío (día libre)
+                    tempCalendar[day] = { start: '', end: '' };
+                }
+            }
+
+            if (!hasValidEntry) {
+                alert('Debe configurar al menos un día de trabajo con horarios válidos.');
+                return;
+            }
+
+            currentGroomerCalendar = tempCalendar; // Actualizar el horario configurado
+            hideModal(calendarModal);
+            alert('Horario configurado con éxito. Recuerde guardar los cambios del peluquero.');
+        });
+    }
+
+    // --- Listeners para habilitar/deshabilitar inputs de tiempo con checkboxes ---
+    daysOfWeek.forEach(day => {
+        const enabledCheckbox = document.querySelector(`.enable-day-checkbox[data-day="${day}"]`);
+        const startTimeInput = document.querySelector(`.start-time-input[data-day="${day}"]`);
+        const endTimeInput = document.querySelector(`.end-time-input[data-day="${day}"]`);
+
+        if (enabledCheckbox && startTimeInput && endTimeInput) {
+            enabledCheckbox.addEventListener('change', () => {
+                const isChecked = enabledCheckbox.checked;
+                startTimeInput.disabled = !isChecked;
+                endTimeInput.disabled = !isChecked;
+
+                // Limpiar valores si se deshabilita el día
+                if (!isChecked) {
+                    startTimeInput.value = '';
+                    endTimeInput.value = '';
                 }
             });
         }
-        if (groomerForm) groomerForm.addEventListener('submit', saveGroomer);
+    });
 
-        if (deleteGroomerButton) deleteGroomerButton.addEventListener('click', deleteSelectedGroomer);
-        if (modifyGroomerButton) modifyGroomerButton.addEventListener('click', openEditGroomerModal);
 
-        if (configureCalendarButton) configureCalendarButton.addEventListener('click', openCalendarModal);
-        if (closeCalendarModalButton) closeCalendarModalButton.addEventListener('click', closeCalendarModal);
-        if (calendarModal) {
-            calendarModal.addEventListener('click', function (event) {
-                if (event.target === calendarModal) {
-                    closeCalendarModal();
-                }
-            });
-        }
-        if (calendarForm) calendarForm.addEventListener('submit', saveCalendar);
-
-        renderGroomers(); // Renderiza los peluqueros al cargar la página (inicialmente vacío)
+    // --- Cargar Peluqueros al inicio de la página (solo si estamos en la vista de peluqueros) ---
+    if (groomersTableBody) {
+        loadGroomers();
     }
 });

@@ -1,5 +1,5 @@
 ﻿@{
-    Layout = null;
+    Layout = null; // O tu layout compartido si tienes uno (ej. "_AdminLayout")
     ViewData["Title"] = "Acqua Di Cane - Gestionar Servicios";
 }
 
@@ -16,7 +16,7 @@
 </head>
 <body>
     <form id="logoutForm" method="post" action="/Account/Logout">
-        @Html.AntiForgeryToken() @* Añade el token antiforja aquí *@
+        @Html.AntiForgeryToken()
         <button class="btn-logout-fixed" type="submit" id="logoutButton">Cerrar Sesión</button>
     </form>
     <div class="admin-container">
@@ -24,15 +24,26 @@
         <main class="admin-content-area">
             <section class="service-form-section">
                 <h3>Agregar Nuevo Servicio</h3>
-                <div class="input-group">
-                    <label for="serviceName">Nombre del Servicio:</label>
-                    <input type="text" id="serviceName" placeholder="Ej: Baño y Cepillado">
-                </div>
-                <div class="input-group">
-                    <label for="servicePrice">Precio ($):</label>
-                    <input type="number" id="servicePrice" placeholder="Ej: 15000">
-                </div>
-                <button class="btn-primary" id="addServiceButton">Agregar Servicio</button>
+                <form id="addServiceForm">
+                    {{-- Añadido ID al formulario para manejar el submit --}}
+                    <div class="input-group">
+                        <label for="addServiceName">Nombre del Servicio:</label> {{-- ID ajustado para evitar conflictos --}}
+                        <input type="text" id="addServiceName" name="Nombre" placeholder="Ej: Baño y Cepillado" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="addServiceDescription">Descripción:</label> {{-- Añadido --}}
+                        <textarea id="addServiceDescription" name="Descripcion" rows="3" placeholder="Descripción del servicio"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="addServicePrice">Precio ($):</label> {{-- ID ajustado --}}
+                        <input type="number" id="addServicePrice" name="Precio" step="0.01" min="0" placeholder="Ej: 15000" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="addServiceDuration">Duración (minutos):</label> {{-- Añadido --}}
+                        <input type="number" id="addServiceDuration" name="DuracionEnMinutos" min="5" step="5" placeholder="Ej: 60" required>
+                    </div>
+                    <button class="btn-primary" type="submit" id="addServiceButton">Agregar Servicio</button> {{-- Añadido type="submit" --}}
+                </form>
             </section>
 
             <section>
@@ -41,7 +52,10 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
+                            <th>Descripción</th> {{-- Nueva columna --}}
                             <th>Precio</th>
+                            <th>Duración (min)</th> {{-- Nueva columna --}}
+                            <th>Activo</th> {{-- Nueva columna --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -58,30 +72,47 @@
             </section>
 
             <div class="admin-actions-footer">
-                <button class="btn-secondary" onclick="location.href='@Url.Action("Inicio", "Admin")'">Volver al Menú Principal</button>
+                <button class="btn-secondary" onclick="location.href='@Url.Action("Dashboard", "Admin")'">Volver al Menú Principal</button> {{-- Ajustado a Dashboard --}}
             </div>
         </main>
     </div>
 
+    @* MODAL PARA MODIFICAR SERVICIO (EDITAR) *@
     <div class="modal-overlay" id="serviceModal">
+        {{-- Este es el modal de edición --}}
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="serviceModalTitle"></h3>
+                <h3 id="serviceModalTitle">Modificar Servicio</h3> {{-- Título fijo para edición --}}
                 <button class="close-modal-button" id="closeServiceModalButton">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="serviceForm">
+                <form id="editServiceForm">
+                    {{-- ID de formulario diferente para edición --}}
+                    <input type="hidden" id="modalServiceId" name="Id" /> {{-- Para el ID del servicio a editar --}}
                     <div class="input-group">
-                        <label for="modalServiceNameInput">Nombre:</label>
-                        <input type="text" id="modalServiceNameInput" required>
+                        <label for="modalEditServiceName">Nombre:</label> {{-- ID único para el input en el modal --}}
+                        <input type="text" id="modalEditServiceName" name="Nombre" required>
                     </div>
                     <div class="input-group">
-                        <label for="modalServicePriceInput">Precio ($):</label>
-                        <input type="number" id="modalServicePriceInput" required min="0">
+                        <label for="modalEditServiceDescription">Descripción:</label> {{-- Nuevo campo --}}
+                        <textarea id="modalEditServiceDescription" name="Descripcion" rows="3"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalEditServicePrice">Precio ($):</label> {{-- ID único --}}
+                        <input type="number" id="modalEditServicePrice" name="Precio" required min="0" step="0.01">
+                    </div>
+                    <div class="input-group">
+                        <label for="modalEditServiceDuration">Duración (minutos):</label> {{-- Nuevo campo --}}
+                        <input type="number" id="modalEditServiceDuration" name="DuracionEnMinutos" min="5" step="5" required>
+                    </div>
+                    <div class="input-group">
+                        {{-- Nuevo campo --}}
+                        <input type="checkbox" id="modalEditServiceEstaActivo" name="EstaActivo" class="checkbox-style">
+                        <label for="modalEditServiceEstaActivo">Servicio Activo</label>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn-primary" id="saveServiceButton">Guardar Cambios</button>
-                        <button type="button" class="btn-secondary" onclick="document.getElementById('serviceModal').classList.remove('active');">Cancelar</button>
+                        <button type="submit" class="btn-primary">Guardar Cambios</button>
+                        <button type="button" class="btn-secondary" id="cancelEditServiceModalButton">Cancelar</button> {{-- ID único --}}
                     </div>
                 </form>
             </div>
@@ -89,6 +120,6 @@
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/js/admin-scripts.js" asp-append-version="true"></script>
+    <script src="~/js/admin-services-scripts.js" asp-append-version="true"></script>
 </body>
 </html>
