@@ -1,43 +1,45 @@
 ﻿/* General Dashboard Layout */
 .client-dashboard-container {
     display: flex;
-    min-height: calc(100vh - var(--header-height, 0px) - var(--footer-height, 0px)); /* Ajusta a la altura de tu header/footer si los hay */
-    font-family: 'Montserrat', sans-serif;
-    background-color: #f8f8f8;
+    min-height: calc(100vh - var(--header-height, 0px) - var(--footer-height, 0px));
+    font-family: 'Montserrat', sans-serif; /* Mantenemos Montserrat aquí también para asegurar */
+    background-color: transparent; /* Permite ver el fondo de patitas del body/html */
 }
 
-/* Sidebar */
+/* Sidebar - FONDO Y FUENTES */
 .sidebar {
-    width: 280px; /* Un poco más ancho */
-    background-color: #34495e; /* Azul oscuro */
-    color: #ecf0f1; /* Gris claro */
-    padding: 30px 20px; /* Más padding */
+    width: 280px;
+    color: #ecf0f1;
+    padding: 30px 20px;
     box-shadow: 2px 0 8px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
-    align-items: center; /* Centrar contenido */
-    gap: 30px; /* Espacio entre elementos */
-    background-image: url('../img/sidebar-bg.jpg'); /* Si tienes una imagen de fondo */
+    align-items: center;
+    gap: 30px;
+    /* REINTRODUCCION DE ESTILOS DE FONDO Y ELIMINACION DE TONO AZUL */
+    background-image: url('../img/sidebar-bg.jpeg'); /* Asegúrate que esta sea la ruta real y el nombre de tu imagen */
     background-size: cover;
     background-position: center;
-    position: relative; /* Para el overlay */
-}
-
-    .sidebar::before { /* Overlay oscuro para la imagen de fondo */
+    background-repeat: no-repeat;
+    background-color: transparent; /* Esto es clave para el "tono azul" */
+    /* Si el tono azul persiste, verifica si hay un pseudo-elemento ::before o ::after en el inspector del navegador */
+    /* Por ejemplo, si ves esto: */
+    /*
+    &::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(52, 73, 94, 0.85); /* Overlay semi-transparente */
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(0,0,255,0.3); // ¡Este sería el causante!
+        z-index: 0;
     }
+    */
+    /* Si existe, tendrías que cambiar su background-color a transparent o un rgba más neutro como rgba(0,0,0,0.2) */
+}
 
-    .sidebar > * { /* Asegurar que el contenido esté sobre el overlay */
+    .sidebar > * { /* Asegurar que el contenido esté sobre el overlay (si lo hay) */
         z-index: 1;
         position: relative;
     }
-
 
 .sidebar-header {
     text-align: center;
@@ -46,7 +48,7 @@
 
     .sidebar-header h2 {
         color: #ffffff; /* Blanco para el título */
-        font-family: 'Dancing Script', cursive;
+        font-family: 'Dancing Script', cursive; /* REINTRODUCIDO: Fuente Dancing Script */
         font-size: 3em; /* Más grande */
         margin-bottom: 10px;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
@@ -65,6 +67,7 @@
     box-sizing: border-box;
 }
 
+/* BOTONES DEL SIDEBAR */
 .sidebar-button {
     width: 100%;
     background-color: #e74c3c; /* Rojo vibrante */
@@ -102,28 +105,43 @@
 .main-content {
     flex-grow: 1;
     padding: 30px;
-    background-color: #ffffff;
+    /* Main content debe ser transparente para que se vea el fondo de patitas del HTML
+       o para que las secciones internas (dashboard-section) puedan tener su propio fondo visible */
+    background-color: transparent;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    box-shadow: 0 0 10px rgba(0,0,0,0.05); /* Sombra para el main-content sobre el fondo de patitas */
     margin: 20px;
     display: flex;
-    flex-direction: column; /* Para organizar el contenido verticalmente */
-    align-items: center; /* Centrar horizontalmente el contenido principal */
+    flex-direction: column;
+    align-items: center;
 }
 
 .main-title {
     color: #34495e;
     font-size: 2.5em;
     margin-bottom: 30px;
-    border-bottom: 3px solid #e74c3c; /* Línea roja debajo del título */
+    border-bottom: 3px solid #e74c3c;
     padding-bottom: 10px;
-    width: 100%; /* Ocupa todo el ancho */
+    width: 100%;
     text-align: center;
 }
 
+/* Dashboard Section - FONDO DE PERRITO */
 .dashboard-section {
     display: none; /* Hidden by default, JS shows active one */
-    width: 100%; /* Ocupa todo el ancho disponible */
+    width: 100%;
+    /* REINTRODUCCION DE ESTILOS DE FONDO */
+    background-image: url('../img/dog-rot-glass.jpeg'); /* Ruta a tu imagen de perrito */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* Añadir un overlay para asegurar la legibilidad del texto sobre la imagen */
+    background-color: rgba(255, 255, 255, 0.7); /* Blanco con 70% de opacidad como base */
+    background-blend-mode: overlay; /* Mezcla la imagen con el color de fondo */
+    color: #333; /* Color de texto oscuro para buen contraste sobre el overlay */
+    padding: 20px; /* Dale un padding para que el contenido no esté pegado a la imagen */
+    border-radius: 8px; /* Mantener los bordes redondeados */
+    box-shadow: 0 0 10px rgba(0,0,0,0.05); /* Agregamos sombra a la sección para destacarla */
 }
 
     .dashboard-section.active {
@@ -265,7 +283,6 @@
 /* Forms General Styling */
 form {
     margin-top: 20px;
-    background-color: #fdfdfd;
     padding: 30px; /* Más padding */
     border-radius: 10px; /* Más redondeado */
     box-shadow: 0 2px 10px rgba(0,0,0,0.08); /* Sombra más suave */
@@ -349,6 +366,7 @@ form {
         font-weight: normal; /* No negrita para las etiquetas de checkbox inline */
     }
 
+/* BOTONES PRIMARIOS Y SECUNDARIOS (FORMULARIOS) */
 .btn-primary, .btn-secondary {
     padding: 12px 28px; /* Más padding */
     border: none;
@@ -445,8 +463,8 @@ form {
 
     .appointment-info p {
         font-size: 0.95em;
-        color: #555;
         margin-bottom: 5px;
+        color: #555;
     }
 
         .appointment-info p strong {
@@ -550,12 +568,12 @@ form {
         height: auto;
         padding: 20px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        background-image: none; /* Quitar imagen en móviles */
-        background-color: #34495e;
+        background-image: none; /* Quitar imagen en móviles para simplificar y mejorar rendimiento */
+        background-color: #34495e; /* Un color sólido de respaldo para móviles */
     }
 
         .sidebar::before {
-            display: none;
+            display: none; /* Asegura que cualquier overlay de pseudo-elemento se desactive en móviles */
         }
 
     .sidebar-header h2 {
@@ -578,6 +596,9 @@ form {
     .main-content {
         margin: 15px;
         padding: 20px;
+        /* En móvil, si la imagen de patitas es muy fuerte,
+           considera darle un background-color sólido aquí */
+        background-color: #ffffff; /* Podrías volver a poner blanco aquí para móviles */
     }
 
     .main-title {
@@ -585,7 +606,7 @@ form {
     }
 
     .form-grid {
-        grid-template-columns: 1fr; /* Single column on smaller screens */
+        grid-template-columns: 1fr;
     }
 
     .input-group.checkbox-full-width, .input-group.full-width {
@@ -593,18 +614,18 @@ form {
     }
 
     .pet-card {
-        max-width: 350px; /* Limitar ancho en móvil */
-        margin: auto; /* Centrar */
+        max-width: 350px;
+        margin: auto;
     }
 
     .appointment-card {
-        flex-direction: column; /* Apilar en vertical */
+        flex-direction: column;
         align-items: flex-start;
     }
 
     .appointment-status {
         margin-top: 10px;
-        align-self: flex-end; /* Alinear a la derecha */
+        align-self: flex-end;
     }
 
     .appointment-actions {

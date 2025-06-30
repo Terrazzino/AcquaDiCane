@@ -1,5 +1,4 @@
-﻿// Controllers/ClienteController.cs
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 namespace AcquaDiCane.Controllers

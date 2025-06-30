@@ -1,0 +1,58 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using AcquaDiCane.Models.Identity
+@inject SignInManager<AplicationUser> SignInManager
+@inject UserManager<AplicationUser> UserManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - AcquaDiCane</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="~/css/client-dashboard.css" /> @* Agregamos el CSS del dashboard aquí *@
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="client-dashboard-container">
+        @* Este div ahora contiene todo el layout del dashboard *@
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Acqua Di Cane</h2>
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <p>Panel de @UserManager.GetUserName(User)</p>
+                }
+                else
+                {
+                    <p>Panel de Cliente</p>
+                }
+            </div>
+            <div class="sidebar-nav">
+                <button class="sidebar-button active" data-section="overview">Registrar Mascota</button>
+                <button class="sidebar-button" data-section="schedule-appointment" id="btnPeluqueria">Peluquería</button>
+                <form id="logoutForm" class="form-inline" method="post" action="/Account/Logout">
+                    @Html.AntiForgeryToken() @* Añade el token antiforja aquí *@
+                    <button class="sidebar-button" type="submit" id="logoutButton">Cerrar Sesión</button>
+                </form>
+            </div>
+        </aside>
+
+        <main role="main" class="main-content">
+            @* Renombramos la clase para que coincida con tu diseño *@
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/client-dashboard.js"></script> @* Asegúrate de cargar este script al final *@
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

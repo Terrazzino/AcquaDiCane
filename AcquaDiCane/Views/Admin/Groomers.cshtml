@@ -1,0 +1,159 @@
+﻿@{
+    Layout = null;
+    ViewData["Title"] = "Acqua Di Cane - Gestionar Peluqueros";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/admin-styles.css" asp-append-version="true">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <form id="logoutForm" method="post" action="/Account/Logout">
+        @Html.AntiForgeryToken() @* Añade el token antiforja aquí *@
+        <button class="btn-logout-fixed" type="submit" id="logoutButton">Cerrar Sesión</button>
+    </form>
+    <div class="admin-container">
+        <h1 class="app-logo-outside">Gestionar Peluqueros</h1>
+        <main class="admin-content-area">
+            <section class="service-form-section">
+                <h3>Registrar Nuevo Peluquero</h3>
+                <div class="input-group">
+                    <label for="groomerNameInput">Nombre:</label>
+                    <input type="text" id="groomerNameInput" placeholder="Nombre" required>
+                </div>
+                <div class="input-group">
+                    <label for="groomerApellidoInput">Apellido:</label>
+                    <input type="text" id="groomerApellidoInput" placeholder="Apellido" required>
+                </div>
+                <div class="input-group">
+                    <label for="groomerPhoneInput">Teléfono:</label>
+                    <input type="tel" id="groomerPhoneInput" placeholder="Ej: 341-xxxx-xxxx" required>
+                </div>
+                <div class="input-group">
+                    <label for="groomerEmailInput">Email:</label>
+                    <input type="email" id="groomerEmailInput" placeholder="ejemplo@email.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="groomerBirthDateInput">Fecha de Nacimiento:</label>
+                    <input type="date" id="groomerBirthDateInput" required>
+                </div>
+                <div class="input-group">
+                    <label for="groomerDNIInput">DNI:</label>
+                    <input type="text" id="groomerDNIInput" placeholder="DNI sin puntos" required>
+                </div>
+                <button class="btn-primary" id="registerGroomerButton">Registrar Peluquero</button>
+            </section>
+
+            <section>
+                <h3>Peluqueros Registrados</h3>
+                <table class="data-table" id="groomersTable">
+                    <thead>
+                        <tr>
+                            <th>Nombre Completo</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Fecha de Inicio</th>
+                            <th>Fecha de Nacimiento</th>
+                            <th>DNI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="selected-groomer-actions">
+                <p>Peluquero Seleccionado: <span id="selectedGroomerName" class="selected-name-display">Ninguno</span></p>
+                <div class="action-buttons-group">
+                    <button class="btn-info" id="modifyGroomerButton" disabled>Modificar</button>
+                    <button class="btn-warning" id="deleteGroomerButton" disabled>Eliminar</button>
+                </div>
+            </section>
+
+            <div class="admin-actions-footer">
+                <button class="btn-secondary" onclick="location.href='@Url.Action("Inicio", "Admin")'">Volver al Menú Principal</button>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="groomerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="groomerModalTitle"></h3>
+                <button class="close-modal-button" id="closeGroomerModalButton">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="groomerForm">
+                    <div class="input-group">
+                        <label for="groomerNameInput">Nombre:</label>
+                        <input type="text" id="groomerNameInput" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="groomerApellidoInput">Apellido:</label>
+                        <input type="text" id="groomerApellidoInput" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="groomerPhoneInput">Teléfono:</label>
+                        <input type="tel" id="groomerPhoneInput" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="groomerEmailInput">Email:</label>
+                        <input type="email" id="groomerEmailInput" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="groomerBirthDateInput">Fecha de Nacimiento:</label>
+                        <input type="date" id="groomerBirthDateInput" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="groomerDNIInput">DNI:</label>
+                        <input type="text" id="groomerDNIInput" required>
+                    </div>
+                    <div class="input-group">
+                        <button type="button" class="btn-secondary" id="configureCalendarButton">Configurar Horario</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary" id="saveGroomerButton">Guardar Cambios</button>
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('groomerModal').classList.remove('active');">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="calendarModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Configurar Horario del Peluquero</h3>
+                <button class="close-modal-button" id="closeCalendarModalButton">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="calendarForm">
+                    @foreach (var day in new string[] { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado" })
+                    {
+                        <div class="input-group">
+                            <label>@day:</label>
+                            <input type="time" class="start-time-input" data-day="@day">
+                            <span> - </span>
+                            <input type="time" class="end-time-input" data-day="@day">
+                        </div>
+                    }
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary">Guardar Horario</button>
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('calendarModal').classList.remove('active');">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/admin-scripts.js" asp-append-version="true"></script>
+</body>
+</html>

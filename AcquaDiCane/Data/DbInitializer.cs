@@ -41,8 +41,8 @@ namespace AcquaDiCane.Data
 
             // 3. Crear un usuario administrador inicial si no existe
             // Este será tu punto de entrada al sistema con privilegios completos.
-            string adminUserName = "admin@aquadicane.com"; // Email de acceso
-            string adminPassword = "PasswordSegura123!"; // Contraseña fuerte (¡CÁMBIALA EN PRODUCCIÓN!)
+            string adminUserName = "admin@gmail.com"; // Email de acceso
+            string adminPassword = "Abc_1234"; // Contraseña fuerte (¡CÁMBIALA EN PRODUCCIÓN!)
 
             var adminUser = await userManager.FindByNameAsync(adminUserName);
 
@@ -85,74 +85,6 @@ namespace AcquaDiCane.Data
                     Console.WriteLine($"Usuario '{adminUserName}' asignado al rol 'Administrador' (ya existía).");
                 }
             }
-
-            // Opcional: Puedes sembrar otros datos maestros si los tienes
-            // Ejemplo: Métodos de pago
-            /*
-            if (!context.MetodosDePago.Any())
-            {
-                context.MetodosDePago.AddRange(
-                    new MetodoDePago { NombreDelMetodo = "Efectivo" },
-                    new MetodoDePago { NombreDelMetodo = "Tarjeta de Crédito" },
-                    new MetodoDePago { NombreDelMetodo = "Mercado Pago" }
-                );
-                await context.SaveChangesAsync();
-                Console.WriteLine("Métodos de pago sembrados.");
-            }
-            */
-
-            // Opcional: Aquí podrías crear un Peluquero o Cliente de ejemplo si lo necesitas para pruebas iniciales,
-            // y vincularlo a su perfil y ApplicationUser.
-            // Para un peluquero de ejemplo:
-            /*
-            string peluqueroUserName = "peluquero1@aquadicane.com";
-            var peluqueroUser = await userManager.FindByNameAsync(peluqueroUserName);
-
-            if (peluqueroUser == null)
-            {
-                peluqueroUser = new ApplicationUser
-                {
-                    UserName = peluqueroUserName,
-                    Email = peluqueroUserName,
-                    EmailConfirmed = true,
-                    Nombre = "Juan",
-                    Apellido = "Perez",
-                    FechaNacimiento = DateTime.Parse("1985-05-10"),
-                    DNI = "12345678X"
-                };
-
-                var createPeluqueroResult = await userManager.CreateAsync(peluqueroUser, "PasswordPeluquero1!");
-                if (createPeluqueroResult.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(peluqueroUser, "Peluquero");
-
-                    // Crear el perfil de Peluquero y asociarlo al ApplicationUser
-                    var peluqueroProfile = new Peluquero
-                    {
-                        AplicationUser = peluqueroUser, // EF Core vinculará esto automáticamente si el objeto ya está en el contexto
-                        // Si no está, tendrías que asignar peluqueroUser.Id a AplicationUserId
-                        // O, si quieres evitar cargar el usuario de nuevo:
-                        // AplicationUserId = peluqueroUser.Id
-                    };
-                    context.Peluqueros.Add(peluqueroProfile);
-                    await context.SaveChangesAsync(); // Guardar el perfil de peluquero
-                    Console.WriteLine($"Usuario peluquero '{peluqueroUserName}' creado y asignado al rol 'Peluquero' con perfil.");
-                }
-                else
-                {
-                    Console.WriteLine($"Error al crear usuario peluquero '{peluqueroUserName}': {string.Join(", ", createPeluqueroResult.Errors.Select(e => e.Description))}");
-                }
-            }
-            else
-            {
-                 Console.WriteLine($"Usuario peluquero '{peluqueroUserName}' ya existe.");
-                 if (!await userManager.IsInRoleAsync(peluqueroUser, "Peluquero"))
-                 {
-                     await userManager.AddToRoleAsync(peluqueroUser, "Peluquero");
-                     Console.WriteLine($"Usuario '{peluqueroUserName}' asignado al rol 'Peluquero' (ya existía).");
-                 }
-            }
-            */
 
         }
     }

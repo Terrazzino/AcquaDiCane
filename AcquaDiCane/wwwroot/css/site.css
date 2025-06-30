@@ -1,0 +1,41 @@
+﻿/* General site.css styles */
+html {
+    font-size: 14px;
+    /* APLICAR EL FONDO DE PATITAS AL HTML */
+    background-image: url('../img/huellas-fondo.png'); /* Asegúrate que esta sea la ruta correcta */
+    background-repeat: repeat;
+    background-attachment: fixed;
+    background-size: auto;
+    background-color: #f0f0f0; /* Un color de respaldo */
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+/* El body puede ser transparente para que se vea el fondo del html */
+body {
+    margin-bottom: 60px; /* Asegura espacio para el footer */
+    background-color: transparent; /* Hacemos el body transparente para que se vea el fondo del HTML */
+    /* Reintroducimos font-family global si se desea */
+    font-family: 'Montserrat', sans-serif; /* Si usas Montserrat globalmente, ponlo aquí */
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    white-space: nowrap;
+    line-height: 60px;
+}

@@ -1,218 +1,199 @@
-﻿
-@{
+﻿@{
     ViewData["Title"] = "Acqua Di Cane - Mi Cuenta";
-    Layout = "_Layout"; // Usamos el _Layout por defecto
+    Layout = "_ClientLayout";
 }
 
-<link rel="stylesheet" href="~/css/client-dashboard.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<section id="overview-section" class="dashboard-section active">
+    @* Este es el contenido principal cuando no hay mascotas o cuando se ve el resumen *@
+    <h1 class="main-title">Mis Mascotas</h1>
+    <div id="noPetsMessage" class="info-message">
+        <p>Aún no tienes mascotas registradas. ¡Registra una para empezar!</p>
+        <button class="btn-primary" data-section="add-pet-from-empty">Registrar mi primera mascota</button>
+    </div>
+    <div id="petsOverviewContainer" class="pets-grid">
+    </div>
+</section>
 
-<div class="client-dashboard-container">
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>Acqua Di Cane</h2>
-            <p>Panel de Cliente</p>
-        </div>
-        <div class="sidebar-nav">
-            <button class="sidebar-button active" data-section="overview">Registrar Mascota</button>
-            <button class="sidebar-button" data-section="schedule-appointment" id="btnPeluqueria">Peluquería</button>
-            <button class="sidebar-button" id="logoutButton">Cerrar Sesión</button>
-        </div>
-    </aside>
-
-    <main class="main-content">
-        <section id="overview-section" class="dashboard-section active">
-            @* Este es el contenido principal cuando no hay mascotas o cuando se ve el resumen *@
-            <h1 class="main-title">Mis Mascotas</h1>
-            <div id="noPetsMessage" class="info-message">
-                <p>Aún no tienes mascotas registradas. ¡Registra una para empezar!</p>
-                <button class="btn-primary" data-section="add-pet-from-empty">Registrar mi primera mascota</button>
+<section id="add-pet-section" class="dashboard-section">
+    <h1 class="main-title">Registrar Nueva Mascota</h1>
+    <form id="addPetForm" enctype="multipart/form-data">
+        <div class="form-grid">
+            <div class="input-group">
+                <label for="petName">Nombre</label>
+                <input type="text" id="petName" name="Name" required>
             </div>
-            <div id="petsOverviewContainer" class="pets-grid">
-            </div>
-        </section>
-
-        <section id="add-pet-section" class="dashboard-section">
-            <h1 class="main-title">Registrar Nueva Mascota</h1>
-            <form id="addPetForm" enctype="multipart/form-data">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label for="petName">Nombre</label>
-                        <input type="text" id="petName" name="Name" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="petBreed">Raza</label>
-                        <input type="text" id="petBreed" name="Breed">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="noBreedCheckbox">
-                            <label for="noBreedCheckbox">Sin raza (mestizo)</label>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label for="petSize">Tamaño</label>
-                        <select id="petSize" name="Size" required>
-                            <option value="">Seleccione...</option>
-                            <option value="pequeno">Pequeño</option>
-                            <option value="mediano">Mediano</option>
-                            <option value="grande">Grande</option>
-                            <option value="gigante">Gigante</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="petSex">Sexo</label>
-                        <select id="petSex" name="Sex" required>
-                            <option value="">Seleccione...</option>
-                            <option value="macho">Macho</option>
-                            <option value="hembra">Hembra</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="petWeight">Peso (kg)</label>
-                        <input type="number" id="petWeight" name="Weight" step="0.1" min="0.1" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="petBirthdate">Fecha de Nacimiento</label>
-                        <input type="date" id="petBirthdate" name="BirthDate" required>
-                    </div>
-                    <div class="input-group checkbox-full-width">
-                        <input type="checkbox" id="petCastrated" name="Castrated">
-                        <label for="petCastrated">¿Está castrado/a?</label>
-                    </div>
-                    <div class="input-group checkbox-full-width">
-                        <input type="checkbox" id="petAllergies" name="Allergies">
-                        <label for="petAllergies">¿Tiene alergias conocidas?</label>
-                    </div>
-                    <div class="input-group full-width">
-                        <label for="profilePic">Foto de Perfil</label>
-                        <input type="file" id="profilePic" name="ProfilePic" accept="image/*">
-                        <small>Opcional. Si no se sube, se usará una imagen por defecto.</small>
-                    </div>
+            <div class="input-group">
+                <label for="petBreed">Raza</label>
+                <input type="text" id="petBreed" name="Breed">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="noBreedCheckbox">
+                    <label for="noBreedCheckbox">Sin raza (mestizo)</label>
                 </div>
-                <button type="submit" class="btn-primary">Registrar Mascota</button>
-                <button type="button" class="btn-secondary" data-section="cancel-add-pet">Cancelar</button>
-                <div id="addPetMessages" class="form-messages"></div>
-            </form>
-        </section>
-
-        <section id="schedule-appointment-section" class="dashboard-section">
-            <h1 class="main-title">Agendar Turno de Peluquería</h1>
-            <p class="section-description">Selecciona a tu mascota y los detalles del turno.</p>
-
-            <div id="noPetsForAppointmentMessage" class="error-message" style="display: none;">
-                <p><i class="fas fa-exclamation-triangle"></i> Para agendar un turno, primero debes <a href="#" data-section="add-pet-from-empty">registrar una mascota</a>.</p>
             </div>
-
-            <div id="noServicesOrGroomersMessage" class="warning-message" style="display: none;">
-                <p><i class="fas fa-info-circle"></i> No hay servicios o peluqueros disponibles. Por favor, intente más tarde.</p>
+            <div class="input-group">
+                <label for="petSize">Tamaño</label>
+                <select id="petSize" name="Size" required>
+                    <option value="">Seleccione...</option>
+                    <option value="pequeno">Pequeño</option>
+                    <option value="mediano">Mediano</option>
+                    <option value="grande">Grande</option>
+                    <option value="gigante">Gigante</option>
+                </select>
             </div>
+            <div class="input-group">
+                <label for="petSex">Sexo</label>
+                <select id="petSex" name="Sex" required>
+                    <option value="">Seleccione...</option>
+                    <option value="macho">Macho</option>
+                    <option value="hembra">Hembra</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="petWeight">Peso (kg)</label>
+                <input type="number" id="petWeight" name="Weight" step="0.1" min="0.1" required>
+            </div>
+            <div class="input-group">
+                <label for="petBirthdate">Fecha de Nacimiento</label>
+                <input type="date" id="petBirthdate" name="BirthDate" required>
+            </div>
+            <div class="input-group checkbox-full-width">
+                <input type="checkbox" id="petCastrated" name="Castrated">
+                <label for="petCastrated">¿Está castrado/a?</label>
+            </div>
+            <div class="input-group checkbox-full-width">
+                <input type="checkbox" id="petAllergies" name="Allergies">
+                <label for="petAllergies">¿Tiene alergias conocidas?</label>
+            </div>
+            <div class="input-group full-width">
+                <label for="profilePic">Foto de Perfil</label>
+                <input type="file" id="profilePic" name="ProfilePic" accept="image/*">
+                <small>Opcional. Si no se sube, se usará una imagen por defecto.</small>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary">Registrar Mascota</button>
+        <button type="button" class="btn-secondary" data-section="cancel-add-pet">Cancelar</button>
+        <div id="addPetMessages" class="form-messages"></div>
+    </form>
+</section>
 
-            <form id="scheduleAppointmentForm" style="display: none;">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label for="appointmentPet">Mascota</label>
-                        <select id="appointmentPet" name="PetId" required>
-                            <option value="">Seleccione una mascota...</option>
-                        </select>
-                        <span class="error-message" id="errorAppointmentPet"></span>
-                    </div>
-                    <div class="input-group">
-                        <label for="appointmentDate">Fecha</label>
-                        <input type="date" id="appointmentDate" name="Date" required>
-                        <span class="error-message" id="errorAppointmentDate"></span>
-                    </div>
-                    <div class="input-group">
-                        <label for="appointmentTime">Hora</label>
-                        <input type="time" id="appointmentTime" name="Time" required min="09:00" max="18:00">
-                        <span class="error-message" id="errorAppointmentTime"></span>
-                    </div>
-                    <div class="input-group">
-                        <label for="appointmentGroomer">Peluquero</label>
-                        <select id="appointmentGroomer" name="GroomerId" required>
-                            @* Cambiado a GroomerId *@
-                            <option value="">Seleccione un peluquero...</option>
-                        </select>
-                        <span class="error-message" id="errorAppointmentGroomer"></span>
-                    </div>
-                    <div class="input-group">
-                        <label for="appointmentService">Servicio</label>
-                        <select id="appointmentService" name="ServiceId" required>
-                            @* Cambiado a ServiceId *@
-                            <option value="">Seleccione un servicio...</option>
-                        </select>
-                        <span class="error-message" id="errorAppointmentService"></span>
-                    </div>
-                    <div class="input-group">
-                        <label for="appointmentPrice">Precio Estimado</label>
-                        <input type="text" id="appointmentPrice" name="Price" readonly>
-                    </div>
+<section id="schedule-appointment-section" class="dashboard-section">
+    <h1 class="main-title">Agendar Turno de Peluquería</h1>
+    <p class="section-description">Selecciona a tu mascota y los detalles del turno.</p>
+
+    <div id="noPetsForAppointmentMessage" class="error-message" style="display: none;">
+        <p><i class="fas fa-exclamation-triangle"></i> Para agendar un turno, primero debes <a href="#" data-section="add-pet-from-empty">registrar una mascota</a>.</p>
+    </div>
+
+    <div id="noServicesOrGroomersMessage" class="warning-message" style="display: none;">
+        <p><i class="fas fa-info-circle"></i> No hay servicios o peluqueros disponibles. Por favor, intente más tarde.</p>
+    </div>
+
+    <form id="scheduleAppointmentForm" style="display: none;">
+        <div class="form-grid">
+            <div class="input-group">
+                <label for="appointmentPet">Mascota</label>
+                <select id="appointmentPet" name="PetId" required>
+                    <option value="">Seleccione una mascota...</option>
+                </select>
+                <span class="error-message" id="errorAppointmentPet"></span>
+            </div>
+            <div class="input-group">
+                <label for="appointmentDate">Fecha</label>
+                <input type="date" id="appointmentDate" name="Date" required>
+                <span class="error-message" id="errorAppointmentDate"></span>
+            </div>
+            <div class="input-group">
+                <label for="appointmentTime">Hora</label>
+                <input type="time" id="appointmentTime" name="Time" required min="09:00" max="18:00">
+                <span class="error-message" id="errorAppointmentTime"></span>
+            </div>
+            <div class="input-group">
+                <label for="appointmentGroomer">Peluquero</label>
+                <select id="appointmentGroomer" name="GroomerId" required>
+                    @* Cambiado a GroomerId *@
+                    <option value="">Seleccione un peluquero...</option>
+                </select>
+                <span class="error-message" id="errorAppointmentGroomer"></span>
+            </div>
+            <div class="input-group">
+                <label for="appointmentService">Servicio</label>
+                <select id="appointmentService" name="ServiceId" required>
+                    @* Cambiado a ServiceId *@
+                    <option value="">Seleccione un servicio...</option>
+                </select>
+                <span class="error-message" id="errorAppointmentService"></span>
+            </div>
+            <div class="input-group">
+                <label for="appointmentPrice">Precio Estimado</label>
+                <input type="text" id="appointmentPrice" name="Price" readonly>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary">Agendar Turno</button>
+        <div id="scheduleAppointmentMessages" class="form-messages"></div>
+    </form>
+
+    <h2 class="main-title" style="margin-top: 40px;">Mis Próximos Turnos</h2>
+    <div id="appointmentsListContainer" class="appointments-list">
+        <p>Cargando turnos...</p>
+    </div>
+</section>
+
+<section id="profile-section" class="dashboard-section" style="display:none;">
+    @* Mantendremos la sección de perfil aunque no se accede directamente desde el sidebar inicial. *@
+    @* Podrías tener un botón en el dashboard inicial "Mi Perfil" si lo quieres accesible. *@
+    <h2>Mi Perfil</h2>
+    <div class="profile-info">
+        <p><strong>Nombre:</strong> <span id="profileName"></span></p>
+        <p><strong>Apellido:</strong> <span id="profileLastName"></span></p>
+        <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+        <p><strong>Celular:</strong> <span id="profilePhoneNumber"></span></p>
+        <p><strong>Fecha de Nacimiento:</strong> <span id="profileBirthDate"></span></p>
+        <button class="btn-secondary" id="editProfileBtn">Editar Perfil</button>
+    </div>
+
+    <div id="editProfileFormContainer" style="display: none;">
+        <h3>Editar Datos</h3>
+        <form id="editProfileForm">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="editName">Nombre</label>
+                    <input type="text" id="editName" name="Name" required>
                 </div>
-                <button type="submit" class="btn-primary">Agendar Turno</button>
-                <div id="scheduleAppointmentMessages" class="form-messages"></div>
-            </form>
-
-            <h2 class="main-title" style="margin-top: 40px;">Mis Próximos Turnos</h2>
-            <div id="appointmentsListContainer" class="appointments-list">
-                <p>Cargando turnos...</p>
+                <div class="input-group">
+                    <label for="editLastName">Apellido</label>
+                    <input type="text" id="editLastName" name="LastName" required>
+                </div>
+                <div class="input-group">
+                    <label for="editPhoneNumber">Celular</label>
+                    <input type="tel" id="editPhoneNumber" name="PhoneNumber" pattern="[0-9]{3} [0-9]{3}-[0-9]{4}" title="Formato: 341 123-4567">
+                    <small>Formato: Código de área - Número (ej. 341 123-4567)</small>
+                </div>
             </div>
-        </section>
+            <button type="submit" class="btn-primary">Guardar Cambios</button>
+            <button type="button" class="btn-secondary" id="cancelEditProfile">Cancelar</button>
+            <div id="editProfileMessages" class="form-messages"></div>
+        </form>
 
-        <section id="profile-section" class="dashboard-section" style="display:none;">
-            @* Mantendremos la sección de perfil aunque no se accede directamente desde el sidebar inicial. *@
-            @* Podrías tener un botón en el dashboard inicial "Mi Perfil" si lo quieres accesible. *@
-            <h2>Mi Perfil</h2>
-            <div class="profile-info">
-                <p><strong>Nombre:</strong> <span id="profileName"></span></p>
-                <p><strong>Apellido:</strong> <span id="profileLastName"></span></p>
-                <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-                <p><strong>Celular:</strong> <span id="profilePhoneNumber"></span></p>
-                <p><strong>Fecha de Nacimiento:</strong> <span id="profileBirthDate"></span></p>
-                <button class="btn-secondary" id="editProfileBtn">Editar Perfil</button>
+        <h3 style="margin-top: 30px;">Cambiar Contraseña</h3>
+        <form id="changePasswordForm">
+            <div class="input-group">
+                <label for="oldPassword">Contraseña Actual</label>
+                <input type="password" id="oldPassword" name="OldPassword" required>
             </div>
-
-            <div id="editProfileFormContainer" style="display: none;">
-                <h3>Editar Datos</h3>
-                <form id="editProfileForm">
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label for="editName">Nombre</label>
-                            <input type="text" id="editName" name="Name" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="editLastName">Apellido</label>
-                            <input type="text" id="editLastName" name="LastName" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="editPhoneNumber">Celular</label>
-                            <input type="tel" id="editPhoneNumber" name="PhoneNumber" pattern="[0-9]{3} [0-9]{3}-[0-9]{4}" title="Formato: 341 123-4567">
-                            <small>Formato: Código de área - Número (ej. 341 123-4567)</small>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-primary">Guardar Cambios</button>
-                    <button type="button" class="btn-secondary" id="cancelEditProfile">Cancelar</button>
-                    <div id="editProfileMessages" class="form-messages"></div>
-                </form>
-
-                <h3 style="margin-top: 30px;">Cambiar Contraseña</h3>
-                <form id="changePasswordForm">
-                    <div class="input-group">
-                        <label for="oldPassword">Contraseña Actual</label>
-                        <input type="password" id="oldPassword" name="OldPassword" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="newPassword">Nueva Contraseña</label>
-                        <input type="password" id="newPassword" name="NewPassword" required>
-                        <small>Al menos 8 caracteres, una mayúscula, una minúscula y un número.</small>
-                    </div>
-                    <div class="input-group">
-                        <label for="confirmNewPassword">Confirmar Nueva Contraseña</label>
-                        <input type="password" id="confirmNewPassword" name="ConfirmNewPassword" required>
-                    </div>
-                    <button type="submit" class="btn-primary">Cambiar Contraseña</button>
-                    <div id="changePasswordMessages" class="form-messages"></div>
-                </form>
+            <div class="input-group">
+                <label for="newPassword">Nueva Contraseña</label>
+                <input type="password" id="newPassword" name="NewPassword" required>
+                <small>Al menos 8 caracteres, una mayúscula, una minúscula y un número.</small>
             </div>
-        </section>
-    </main>
-</div>
+            <div class="input-group">
+                <label for="confirmNewPassword">Confirmar Nueva Contraseña</label>
+                <input type="password" id="confirmNewPassword" name="ConfirmNewPassword" required>
+            </div>
+            <button type="submit" class="btn-primary">Cambiar Contraseña</button>
+            <div id="changePasswordMessages" class="form-messages"></div>
+        </form>
+    </div>
+</section>
 
-<script src="~/js/client-dashboard.js"></script>
+@* El script client-dashboard.js ya está en _ClientLayout.cshtml, así que lo eliminamos de aquí *@
+@* <script src="~/js/client-dashboard.js"></script> *@

@@ -62,11 +62,11 @@ namespace AcquaDiCane.Controllers
                         // Redirección basada en el rol
                         if (await _userManager.IsInRoleAsync(user, "Administrador"))
                         {
-                            return RedirectToLocal(returnUrl ?? "/Admin/Dashboard"); // Ruta de tu dashboard de admin
+                            return RedirectToLocal(returnUrl ?? "/Admin/Inicio"); // Ruta de tu dashboard de admin
                         }
                         else if (await _userManager.IsInRoleAsync(user, "Peluquero"))
                         {
-                            return RedirectToLocal(returnUrl ?? "/Peluquero/Dashboard"); // Ruta de tu dashboard de peluquero
+                            return RedirectToLocal(returnUrl ?? "/Peluquero/Inicio"); // Ruta de tu dashboard de peluquero
                         }
                         else if (await _userManager.IsInRoleAsync(user, "Cliente"))
                         {

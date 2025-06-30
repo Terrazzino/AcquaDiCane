@@ -1,0 +1,94 @@
+﻿@{
+    Layout = null;
+    ViewData["Title"] = "Acqua Di Cane - Gestionar Servicios";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/admin-styles.css" asp-append-version="true">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <form id="logoutForm" method="post" action="/Account/Logout">
+        @Html.AntiForgeryToken() @* Añade el token antiforja aquí *@
+        <button class="btn-logout-fixed" type="submit" id="logoutButton">Cerrar Sesión</button>
+    </form>
+    <div class="admin-container">
+        <h1 class="app-logo-outside">Gestionar Servicios</h1>
+        <main class="admin-content-area">
+            <section class="service-form-section">
+                <h3>Agregar Nuevo Servicio</h3>
+                <div class="input-group">
+                    <label for="serviceName">Nombre del Servicio:</label>
+                    <input type="text" id="serviceName" placeholder="Ej: Baño y Cepillado">
+                </div>
+                <div class="input-group">
+                    <label for="servicePrice">Precio ($):</label>
+                    <input type="number" id="servicePrice" placeholder="Ej: 15000">
+                </div>
+                <button class="btn-primary" id="addServiceButton">Agregar Servicio</button>
+            </section>
+
+            <section>
+                <h3>Servicios Existentes</h3>
+                <table class="data-table" id="servicesTable">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="selected-service-actions">
+                <p>Servicio Seleccionado: <span id="selectedServiceName" class="selected-name-display">Ninguno</span></p>
+                <div class="action-buttons-group">
+                    <button class="btn-info" id="modifyServiceButton" disabled>Modificar</button>
+                    <button class="btn-warning" id="deleteServiceButton" disabled>Eliminar</button>
+                </div>
+            </section>
+
+            <div class="admin-actions-footer">
+                <button class="btn-secondary" onclick="location.href='@Url.Action("Inicio", "Admin")'">Volver al Menú Principal</button>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="serviceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="serviceModalTitle"></h3>
+                <button class="close-modal-button" id="closeServiceModalButton">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="serviceForm">
+                    <div class="input-group">
+                        <label for="modalServiceNameInput">Nombre:</label>
+                        <input type="text" id="modalServiceNameInput" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="modalServicePriceInput">Precio ($):</label>
+                        <input type="number" id="modalServicePriceInput" required min="0">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary" id="saveServiceButton">Guardar Cambios</button>
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('serviceModal').classList.remove('active');">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/admin-scripts.js" asp-append-version="true"></script>
+</body>
+</html>
