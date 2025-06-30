@@ -799,30 +799,14 @@
     };
 
     // --- Logout ---
-    logoutButton.addEventListener('click', async function (e) {
-        e.preventDefault();
-        try {
-            // Asumiendo que tu acción de Logout en AccountController maneja esto
-            const response = await fetch('/Account/Logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Incluye el token Anti-Forgery si tu acción de Logout lo requiere
-                    // 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                }
-            });
-
-            if (response.ok) {
-                window.location.href = '/'; // Redirigir a la página de inicio/login
-            } else {
-                console.error('Error al cerrar sesión:', response.statusText);
-                alert('No se pudo cerrar la sesión. Intente de nuevo.');
+    const logoutButton = document.getElementById('logoutButton');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', function (e) {
+            if (!confirm('¿Estás seguro de que querés cerrar sesión?')) {
+                e.preventDefault();
             }
-        } catch (error) {
-            console.error('Error de red al cerrar sesión:', error);
-            alert('Error de conexión al cerrar sesión.');
-        }
-    });
+        });
+    }
 
     // Initial Load: Show overview and load initial data
     showSection('overview-section');
