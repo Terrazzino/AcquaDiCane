@@ -1,0 +1,742 @@
+﻿/* GENERALES */
+body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif; /* Usando Montserrat para el texto general */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-image: url('../img/background-groomer.jpeg'); /* Asegúrate de que esta ruta sea correcta */
+    background-size: cover;
+    background-position: center;
+    color: #333;
+    overflow-y: auto; /* Permite el scroll del body si el contenido es muy alto */
+}
+
+/* CONTENEDOR PRINCIPAL DEL CALENDARIO */
+.groomer-container {
+    background-color: rgba(255, 255, 255, 0.9); /* Ligeramente más opaco para mejor legibilidad */
+    padding: 25px; /* Ajuste a un padding más razonable */
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 800px; /* Ancho máximo aumentado un poco para mejor estética */
+    width: 95%;
+    box-sizing: border-box;
+    max-height: 95vh; /* Limita la altura máxima del contenedor al 95% del viewport */
+    overflow-y: auto; /* Permite scroll solo si el contenido excede la altura */
+    position: relative; /* Para el posicionamiento del botón de logout si se coloca dentro */
+    display: flex; /* Para usar flexbox en el layout interno si es necesario */
+    flex-direction: column; /* Apila los elementos verticalmente */
+    align-items: center; /* Centra los elementos horizontalmente */
+}
+
+/* ENCABEZADO */
+.groomer-header {
+    margin-bottom: 20px; /* Espaciado con el calendario */
+    margin-top: 0;
+    padding-top: 0;
+    width: 100%; /* Asegura que ocupe el ancho completo del contenedor */
+}
+
+.app-logo {
+    font-family: 'Dancing Script', cursive; /* Fuente para el logo */
+    font-size: 2.8em; /* Tamaño grande para el logo */
+    color: #000000;
+    margin-bottom: 8px;
+    margin-top: 0;
+    line-height: 1; /* Elimina espacio extra arriba/abajo del texto */
+}
+
+.welcome-message {
+    font-size: 1.2em;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+#groomerName {
+    font-weight: bold;
+    color: #333;
+}
+
+/* NAVEGACIÓN DEL MES */
+.month-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; /* Espacio entre los elementos de navegación */
+    margin-bottom: 25px; /* Espaciado con la grilla del calendario */
+}
+
+.nav-button {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 8px; /* Bordes más redondeados */
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 1.2em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sutil sombra */
+}
+
+    .nav-button:hover {
+        background-color: #e0e0e0;
+        transform: translateY(-1px); /* Pequeño efecto de elevación */
+    }
+
+.month-display {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #333;
+    text-transform: capitalize;
+}
+
+/* GRILLETA DEL CALENDARIO */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px; /* Espacio entre días */
+    max-width: 700px; /* Ancho máximo para la grilla del calendario */
+    width: 100%; /* Ocupa el 100% del espacio disponible hasta max-width */
+    margin: 0 auto;
+}
+
+.calendar-day {
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 0; /* Ajuste del padding */
+    font-size: 1.1em;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    min-height: 60px; /* Altura mínima para los cuadrados */
+    box-sizing: border-box;
+}
+
+    .calendar-day:hover:not(.day-name):not(.empty):not(.full):not(.available):not(.completed_only) {
+        background-color: #e0e0e0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Estilos para los nombres de los días de la semana */
+    .calendar-day.day-name {
+        background-color: #e9ecef;
+        color: #666;
+        cursor: default;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        border-color: #ccc;
+        font-weight: 600;
+    }
+
+    /* Días vacíos al inicio del mes */
+    .calendar-day.empty {
+        background-color: #f0f0f0;
+        border: 1px dashed #e0e0e0;
+        cursor: default;
+        opacity: 0.6;
+    }
+
+    /* COLORES SEGÚN LA MAQUETA (disponibles, completos, seleccionados) */
+    .calendar-day.available { /* Días con turnos pendientes */
+        background-color: #4CAF50; /* Verde */
+        color: white;
+        border-color: #4CAF50;
+    }
+
+        .calendar-day.available:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+
+    .calendar-day.full { /* Este estilo lo usarías si un día estuviera completamente lleno y no se pudiera reservar más */
+        background-color: #0056b3; /* Azul oscuro */
+        color: white;
+        border-color: #0056b3;
+    }
+
+        .calendar-day.full:hover {
+            background-color: #004085;
+            transform: translateY(-2px);
+        }
+
+    /* Nuevo estilo para días con solo turnos completados */
+    .calendar-day.completed_only { /* Día con todos los turnos completados */
+        background-color: #9e9e9e; /* Gris */
+        color: white;
+        border-color: #9e9e9e;
+        cursor: pointer; /* Aún puede ser clickeable para ver los turnos completados */
+    }
+
+        .calendar-day.completed_only:hover {
+            background-color: #757575;
+            transform: translateY(-2px);
+        }
+
+
+    .calendar-day.selected {
+        border: 3px solid #ffc107; /* Borde más pronunciado para el seleccionado */
+        box-shadow: 0 0 10px rgba(255, 193, 7, 0.8);
+    }
+
+/* BOTÓN DE CERRAR SESIÓN */
+.logout-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 25px; /* Espacio superior para el botón si está en el body */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: fixed; /* Lo fija en la pantalla */
+    top: 20px; /* Distancia del top */
+    right: 20px; /* Distancia de la derecha */
+    z-index: 1001; /* Asegura que esté por encima de todo */
+}
+
+    .logout-button:hover {
+        background-color: #c82333;
+        transform: translateY(-1px);
+    }
+
+/* Estilos para el Modal (ventana emergente de turnos del día) */
+.modal-overlay {
+    display: none; /* Oculto por defecto, se muestra con JS */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex; /* Usamos flex para centrar el contenido */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0; /* Para la transición de entrada/salida */
+    visibility: hidden; /* Para que no sea interactivo cuando está oculto */
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+.modal-content {
+    background-color: #fff;
+    padding: 30px; /* Padding ajustado */
+    border-radius: 10px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4); /* Sombra más pronunciada */
+    width: 90%;
+    max-width: 950px; /* Ancho máximo para el modal de turnos */
+    max-height: 90vh; /* Altura máxima para el contenido del modal */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transform: translateY(-30px); /* Efecto de entrada */
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0); /* Vuelve a la posición original */
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 2em; /* Título de la fecha */
+        color: #333;
+    }
+
+#selectedDateDisplay {
+    font-weight: bold;
+    color: #0056b3; /* Azul oscuro como los días completos */
+}
+
+.close-modal-button {
+    background: none;
+    border: none;
+    font-size: 2.2em; /* Tamaño del icono de cerrar */
+    color: #888;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+    .close-modal-button:hover {
+        color: #333;
+    }
+
+.modal-body {
+    flex-grow: 1;
+    overflow-y: auto; /* Scroll dentro del cuerpo si hay muchas tarjetas */
+    padding-right: 15px; /* Espacio para la barra de scroll si aparece */
+    display: flex;
+    flex-wrap: wrap; /* Permite que las tarjetas fluyan a la siguiente línea */
+    gap: 25px; /* Espacio entre las tarjetas */
+    justify-content: center; /* Centrar las tarjetas si no llenan el ancho */
+    align-items: flex-start; /* Alinea las tarjetas al inicio verticalmente */
+}
+
+/* Estilos de las tarjetas de turno */
+.appointment-card {
+    background-color: #fcfcfc;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); /* Sombra más suave */
+    flex: 1 1 420px; /* Permite que la tarjeta crezca/encoga, con base de 420px */
+    min-width: 320px; /* Asegura un ancho mínimo */
+    max-width: 48%; /* Para que quepan dos por fila en pantallas grandes con un poco de margen */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .appointment-card:hover {
+        transform: translateY(-3px); /* Efecto de elevación al pasar el mouse */
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Colores de borde para las tarjetas según el tipo (como en la maqueta un borde amarillo si está pendiente) */
+    .appointment-card[data-status="Pendiente"] {
+        border: 2px solid #ffc107; /* Borde amarillo para turnos pendientes */
+    }
+
+    .appointment-card[data-status="Completado"] {
+        border: 2px solid #28a745; /* Borde verde para turnos completados */
+    }
+
+    .appointment-card[data-status="Cancelado"] {
+        border: 2px solid #dc3545; /* Borde rojo para turnos cancelados */
+        opacity: 0.8; /* Ligeramente transparente */
+    }
+
+.pet-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #eee;
+}
+
+.pet-avatar {
+    width: 70px; /* Tamaño del avatar aumentado */
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ccc; /* Borde más grueso */
+}
+
+.pet-info div {
+    text-align: left;
+}
+
+.card-label {
+    font-size: 0.95em;
+    color: #666;
+    margin: 3px 0;
+    line-height: 1.4;
+}
+
+.card-value {
+    font-weight: bold;
+    color: #333;
+}
+
+.owner-info {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+.card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espacio entre los botones */
+    margin-top: auto;
+}
+
+.action-button { /* Clase base para los botones de acción en la tarjeta */
+    padding: 12px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease, opacity 0.3s ease;
+    width: 100%;
+}
+
+    .action-button:hover {
+        transform: translateY(-1px);
+    }
+
+/* Estilos específicos para los botones de acción */
+.complete-button {
+    background-color: #28a745; /* Verde para completar */
+    color: white;
+}
+
+    .complete-button:hover {
+        background-color: #218838;
+    }
+
+.cancel-button {
+    background-color: #dc3545; /* Rojo para cancelar */
+    color: white;
+}
+
+    .cancel-button:hover {
+        background-color: #c82333;
+    }
+
+/* Deshabilitar botones para turnos completados o cancelados */
+.action-button[data-status="Completado"],
+.action-button[data-status="Cancelado"] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #cccccc; /* Gris para deshabilitado */
+}
+
+    .action-button[data-status="Completado"]:hover,
+    .action-button[data-status="Cancelado"]:hover {
+        background-color: #cccccc; /* No cambia al pasar el mouse si está deshabilitado */
+        transform: none; /* Sin efecto de elevación */
+    }
+
+
+.no-appointments-message {
+    text-align: center;
+    font-size: 1.3em;
+    color: #777;
+    padding: 40px;
+    font-style: italic;
+}
+
+/* Estilos para los modales más pequeños (Notificar y Cancelar) */
+.modal-content.small-modal {
+    max-width: 600px; /* Ancho más pequeño que el modal de turnos */
+    padding: 25px 35px; /* Ajuste de padding */
+}
+
+.modal-content .modal-header .app-logo-small {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2.2em; /* Tamaño de fuente para el título del modal */
+    color: #333;
+    margin: 0;
+    line-height: 1;
+}
+
+.modal-message {
+    font-size: 1.3em;
+    color: #333;
+    margin-bottom: 25px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+    .modal-message span {
+        font-weight: bold;
+        color: #0056b3;
+    }
+
+.observations-label {
+    font-size: 1.1em;
+    color: #555;
+    text-align: left;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.input-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    min-height: 150px; /* Altura mínima para el área de texto */
+    font-size: 1em;
+    font-family: 'Montserrat', sans-serif;
+    resize: vertical;
+    box-sizing: border-box;
+    background-color: #f8f8f8;
+    color: #333;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Sutil sombra interna */
+}
+
+    .input-group textarea::placeholder {
+        color: #999;
+    }
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    padding-top: 25px;
+    margin-top: 25px;
+    border-top: 1px solid #eee; /* Separador */
+}
+
+    /* Estilo para los botones de acción dentro de los modales pequeños */
+    .modal-footer .btn-primary {
+        background-color: #4CAF50;
+        color: white;
+        padding: 14px 30px; /* Padding más grande */
+        border: none;
+        border-radius: 8px; /* Bordes más redondeados */
+        cursor: pointer;
+        font-size: 1.3em; /* Tamaño de fuente para el botón */
+        font-weight: bold;
+        transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        font-family: 'Dancing Script', cursive; /* Para que el texto del botón tenga el estilo */
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    }
+
+#cancelAppointmentModal .modal-footer .btn-primary {
+    background-color: #dc3545; /* Rojo para cancelar turno */
+}
+
+.modal-footer .btn-primary:hover {
+    filter: brightness(1.05); /* Ligeramente más brillante al pasar el mouse */
+    transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Media Queries para responsividad */
+@media (max-width: 992px) { /* Tabletas y laptops pequeñas */
+    .groomer-container {
+        max-width: 700px;
+        padding: 20px;
+    }
+
+    .calendar-grid {
+        max-width: 600px;
+    }
+
+    .appointment-card {
+        flex: 1 1 350px;
+        max-width: 48%;
+    }
+
+    .modal-content {
+        max-width: 800px;
+        padding: 25px;
+    }
+}
+
+@media (max-width: 768px) { /* Tabletas en modo retrato */
+    .groomer-container {
+        max-width: 90%;
+        padding: 18px;
+    }
+
+    .app-logo {
+        font-size: 2.4em;
+    }
+
+    .welcome-message {
+        font-size: 1.1em;
+    }
+
+    .month-display {
+        font-size: 1.6em;
+    }
+
+    .calendar-grid {
+        max-width: 100%;
+        gap: 6px;
+    }
+
+    .calendar-day {
+        padding: 8px 0;
+        font-size: 1em;
+        min-height: 55px;
+    }
+
+    .modal-content {
+        max-width: 90%;
+        padding: 20px;
+    }
+
+    .modal-body {
+        gap: 20px;
+        flex-direction: column; /* Apila las tarjetas en pantallas más pequeñas */
+        align-items: center; /* Centra las tarjetas apiladas */
+    }
+
+    .appointment-card {
+        max-width: 95%; /* Ocupa casi todo el ancho disponible */
+        flex: 1 1 auto; /* Ajuste para que no crezcan demasiado en ancho */
+        padding: 18px;
+    }
+
+    .pet-avatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .action-button {
+        padding: 10px 12px;
+        font-size: 0.95em;
+    }
+
+    .modal-content.small-modal {
+        max-width: 90%;
+        padding: 20px 25px;
+    }
+
+    .modal-content .modal-header .app-logo-small {
+        font-size: 1.8em;
+    }
+
+    .modal-message {
+        font-size: 1.1em;
+    }
+
+    .observations-label {
+        font-size: 1em;
+    }
+
+    .input-group textarea {
+        min-height: 120px;
+    }
+
+    .modal-footer .btn-primary {
+        font-size: 1.2em;
+        padding: 12px 25px;
+    }
+}
+
+@media (max-width: 576px) { /* Móviles pequeños */
+    body {
+        align-items: flex-start; /* Alinea el contenedor al top en pantallas muy pequeñas */
+        padding-top: 20px; /* Un poco de espacio arriba */
+    }
+
+    .groomer-container {
+        padding: 15px;
+        border-radius: 0; /* Sin bordes redondeados si se expande a pantalla completa */
+        max-width: 100%; /* Permite que ocupe el 100% del ancho */
+    }
+
+    .logout-button {
+        top: 10px;
+        right: 10px;
+        padding: 8px 15px;
+        font-size: 0.9em;
+    }
+
+    .app-logo {
+        font-size: 2em;
+    }
+
+    .welcome-message {
+        font-size: 0.95em;
+    }
+
+    .month-navigation {
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .nav-button {
+        padding: 6px 12px;
+        font-size: 1em;
+    }
+
+    .month-display {
+        font-size: 1.4em;
+    }
+
+    .calendar-grid {
+        gap: 4px;
+    }
+
+    .calendar-day {
+        padding: 6px 0;
+        font-size: 0.85em;
+        min-height: 45px;
+    }
+
+        .calendar-day.day-name {
+            font-size: 0.8em;
+        }
+
+    .modal-content {
+        padding: 15px;
+        max-width: 95%;
+    }
+
+    .modal-header h3 {
+        font-size: 1.6em;
+    }
+
+    .close-modal-button {
+        font-size: 1.8em;
+    }
+
+    .modal-body {
+        gap: 15px;
+    }
+
+    .appointment-card {
+        padding: 15px;
+    }
+
+    .pet-avatar {
+        width: 50px;
+        height: 50px;
+        border-width: 2px;
+    }
+
+    .card-label {
+        font-size: 0.9em;
+    }
+
+    .action-button {
+        padding: 8px 10px;
+        font-size: 0.9em;
+    }
+
+    .modal-content.small-modal {
+        padding: 15px 20px;
+    }
+
+    .modal-content .modal-header .app-logo-small {
+        font-size: 1.6em;
+    }
+
+    .modal-message {
+        font-size: 0.95em;
+    }
+
+    .observations-label {
+        font-size: 0.9em;
+    }
+
+    .input-group textarea {
+        min-height: 90px;
+    }
+
+    .modal-footer .btn-primary {
+        font-size: 1.1em;
+        padding: 10px 20px;
+    }
+}

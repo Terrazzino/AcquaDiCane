@@ -188,7 +188,7 @@ public class ClientApiController : ControllerBase
                                             Fecha = a.FechaHoraDelTurno.ToString("yyyy-MM-dd"),
                                             Hora = a.FechaHoraDelTurno.ToString(@"hh\:mm"),
                                             NombrePeluquero = a.PeluqueroAsignado.AplicationUser.Nombre,
-                                            NombresServicios = a.Detalles.Select(dt => dt.ServicioAsignado.nombreServicio).ToList(),
+                                            NombresServicios = a.Detalles.Select(dt => dt.ServicioAsignado.Nombre).ToList(),
                                             a.PrecioTotal, // Ahora es double
                                             EstadoPago = a.Pago.Estado,
                                             NombreMascota = a.MascotaAsignada.Nombre
@@ -229,7 +229,7 @@ public class ClientApiController : ControllerBase
                 Fecha = a.FechaHoraDelTurno.ToString("yyyy-MM-dd"),
                 Hora = a.FechaHoraDelTurno.ToString(@"hh\:mm"),
                 NombrePeluquero = a.PeluqueroAsignado.AplicationUser.Nombre,
-                NombresServicios = a.Detalles.Select(dt => dt.ServicioAsignado.nombreServicio).ToList(),
+                NombresServicios = a.Detalles.Select(dt => dt.ServicioAsignado.Nombre).ToList(),
                 a.PrecioTotal, // Ahora es double
                 EstadoPago = a.Pago.Estado
             })
@@ -266,7 +266,7 @@ public class ClientApiController : ControllerBase
             ModelState.AddModelError("PeluqueroAsignadoId", "El peluquero seleccionado no es válido.");
         }
 
-        double totalPrecioServicios = 0; // Cambiado de decimal a double
+        decimal totalPrecioServicios = 0; // Cambiado de decimal a double
         if (model.Detalles == null || !model.Detalles.Any())
         {
             ModelState.AddModelError("Detalles", "Se debe seleccionar al menos un servicio para el turno.");
@@ -367,7 +367,7 @@ public class ClientApiController : ControllerBase
     {
         // ELIMINADO: el filtro por 's.EstaActivo'
         var services = await _context.Servicios
-                                        .Select(s => new { s.Id, s.nombreServicio, s.Precio }) // Costo ahora es double
+                                        .Select(s => new { s.Id, s.Nombre, s.Precio }) // Costo ahora es double
                                         .ToListAsync();
         return Ok(services);
     }

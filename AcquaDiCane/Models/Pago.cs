@@ -7,7 +7,7 @@ namespace AcquaDiCane.Models
     {
         [Key]
         public int Id { get; set; }
-        public double Monto { get; set; }
+        public decimal Monto { get; set; }
         public DateTime? FechaPago { get; set; }
         public string Estado { get; set; } // "Aprobado", "Pendiente", "Rechazado", "Cancelado"
         public string MercadoPagoPreferenceId { get; set; } // ID que devuelve MP

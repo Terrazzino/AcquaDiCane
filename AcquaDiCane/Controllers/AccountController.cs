@@ -66,7 +66,7 @@ namespace AcquaDiCane.Controllers
                         }
                         else if (await _userManager.IsInRoleAsync(user, "Peluquero"))
                         {
-                            return RedirectToLocal(returnUrl ?? "/Peluquero/Inicio"); // Ruta de tu dashboard de peluquero
+                            return RedirectToLocal(returnUrl ?? "/Peluquero"); // Ruta de tu dashboard de peluquero
                         }
                         else if (await _userManager.IsInRoleAsync(user, "Cliente"))
                         {

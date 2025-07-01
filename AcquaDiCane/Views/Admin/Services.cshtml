@@ -22,40 +22,18 @@
     <div class="admin-container">
         <h1 class="app-logo-outside">Gestionar Servicios</h1>
         <main class="admin-content-area">
-            <section class="service-form-section">
-                <h3>Agregar Nuevo Servicio</h3>
-                <form id="addServiceForm">
-                    {{-- Añadido ID al formulario para manejar el submit --}}
-                    <div class="input-group">
-                        <label for="addServiceName">Nombre del Servicio:</label> {{-- ID ajustado para evitar conflictos --}}
-                        <input type="text" id="addServiceName" name="Nombre" placeholder="Ej: Baño y Cepillado" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="addServiceDescription">Descripción:</label> {{-- Añadido --}}
-                        <textarea id="addServiceDescription" name="Descripcion" rows="3" placeholder="Descripción del servicio"></textarea>
-                    </div>
-                    <div class="input-group">
-                        <label for="addServicePrice">Precio ($):</label> {{-- ID ajustado --}}
-                        <input type="number" id="addServicePrice" name="Precio" step="0.01" min="0" placeholder="Ej: 15000" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="addServiceDuration">Duración (minutos):</label> {{-- Añadido --}}
-                        <input type="number" id="addServiceDuration" name="DuracionEnMinutos" min="5" step="5" placeholder="Ej: 60" required>
-                    </div>
-                    <button class="btn-primary" type="submit" id="addServiceButton">Agregar Servicio</button> {{-- Añadido type="submit" --}}
-                </form>
-            </section>
-
-            <section>
-                <h3>Servicios Existentes</h3>
+            <section class="management-section">
+                <h3>Servicios Registrados</h3>
+                <button class="btn-primary" id="openAddServiceModalButton">Registrar Nuevo Servicio</button>
                 <table class="data-table" id="servicesTable">
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Descripción</th> {{-- Nueva columna --}}
+                            <th>Descripción</th>
                             <th>Precio</th>
-                            <th>Duración (min)</th> {{-- Nueva columna --}}
-                            <th>Activo</th> {{-- Nueva columna --}}
+                            <th>Duración (min)</th>
+                            <th>Activo</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -63,56 +41,46 @@
                 </table>
             </section>
 
-            <section class="selected-service-actions">
-                <p>Servicio Seleccionado: <span id="selectedServiceName" class="selected-name-display">Ninguno</span></p>
-                <div class="action-buttons-group">
-                    <button class="btn-info" id="modifyServiceButton" disabled>Modificar</button>
-                    <button class="btn-warning" id="deleteServiceButton" disabled>Eliminar</button>
-                </div>
-            </section>
-
             <div class="admin-actions-footer">
-                <button class="btn-secondary" onclick="location.href='@Url.Action("Dashboard", "Admin")'">Volver al Menú Principal</button> {{-- Ajustado a Dashboard --}}
+                <button class="btn-secondary" onclick="location.href='@Url.Action("Inicio", "Admin")'">Volver al Menú Principal</button>
             </div>
         </main>
     </div>
 
-    @* MODAL PARA MODIFICAR SERVICIO (EDITAR) *@
+    @* MODAL PRINCIPAL DEL SERVICIO (ADD/EDIT) *@
     <div class="modal-overlay" id="serviceModal">
-        {{-- Este es el modal de edición --}}
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="serviceModalTitle">Modificar Servicio</h3> {{-- Título fijo para edición --}}
+                <h3 id="serviceModalTitle"></h3>
                 <button class="close-modal-button" id="closeServiceModalButton">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="editServiceForm">
-                    {{-- ID de formulario diferente para edición --}}
-                    <input type="hidden" id="modalServiceId" name="Id" /> {{-- Para el ID del servicio a editar --}}
+                <form id="serviceForm">
+                    <input type="hidden" id="serviceId" name="Id" /> @* Campo oculto para el ID del servicio (solo para edición) *@
                     <div class="input-group">
-                        <label for="modalEditServiceName">Nombre:</label> {{-- ID único para el input en el modal --}}
-                        <input type="text" id="modalEditServiceName" name="Nombre" required>
+                        <label for="modalServiceNombre">Nombre del Servicio:</label>
+                        <input type="text" id="modalServiceNombre" name="Nombre" required>
                     </div>
                     <div class="input-group">
-                        <label for="modalEditServiceDescription">Descripción:</label> {{-- Nuevo campo --}}
-                        <textarea id="modalEditServiceDescription" name="Descripcion" rows="3"></textarea>
+                        <label for="modalServiceDescripcion">Descripción:</label>
+                        <textarea id="modalServiceDescripcion" name="Descripcion" rows="3"></textarea>
                     </div>
                     <div class="input-group">
-                        <label for="modalEditServicePrice">Precio ($):</label> {{-- ID único --}}
-                        <input type="number" id="modalEditServicePrice" name="Precio" required min="0" step="0.01">
+                        <label for="modalServicePrecio">Precio:</label>
+                        <input type="number" id="modalServicePrecio" name="Precio" step="0.01" min="0" required>
                     </div>
                     <div class="input-group">
-                        <label for="modalEditServiceDuration">Duración (minutos):</label> {{-- Nuevo campo --}}
-                        <input type="number" id="modalEditServiceDuration" name="DuracionEnMinutos" min="5" step="5" required>
+                        <label for="modalServiceDuracion">Duración (minutos):</label>
+                        <input type="number" id="modalServiceDuracion" name="DuracionEnMinutos" min="5" step="5" required>
                     </div>
-                    <div class="input-group">
-                        {{-- Nuevo campo --}}
-                        <input type="checkbox" id="modalEditServiceEstaActivo" name="EstaActivo" class="checkbox-style">
-                        <label for="modalEditServiceEstaActivo">Servicio Activo</label>
+                    <div class="input-group" id="modalServiceEstaActivoGroup">
+                        <input type="checkbox" id="modalServiceEstaActivo" name="EstaActivo" class="checkbox-style">
+                        <label for="modalServiceEstaActivo">Servicio Activo</label>
                     </div>
+
                     <div class="modal-footer">
-                        <button type="submit" class="btn-primary">Guardar Cambios</button>
-                        <button type="button" class="btn-secondary" id="cancelEditServiceModalButton">Cancelar</button> {{-- ID único --}}
+                        <button type="submit" class="btn-primary" id="saveServiceButton">Guardar Cambios</button>
+                        <button type="button" class="btn-secondary" id="cancelServiceModalButton">Cancelar</button>
                     </div>
                 </form>
             </div>
@@ -121,5 +89,8 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/admin-services-scripts.js" asp-append-version="true"></script>
+    @* Si tienes un solo archivo admin-scripts.js que quieres usar para todo,
+    puedes consolidar este JS con el de peluqueros.
+    Pero te recomiendo mantenerlos separados para servicios y peluqueros si el código es largo. *@
 </body>
 </html>

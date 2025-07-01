@@ -1,0 +1,109 @@
+﻿@* Este archivo será la vista del calendario del peluquero.
+   Asegúrate de tener un controlador llamado PeluqueroController. *@
+@{
+    // Si tienes un layout específico para el área de peluqueros, úsalo aquí.
+    // Por ejemplo: Layout = "_GroomerLayout";
+    // Si no, puedes mantener Layout = null; y replicar la estructura HTML base.
+    Layout = null; // O tu layout compartido, ej. "_Layout" o "_GroomerLayout"
+    ViewData["Title"] = "Acqua Di Cane - Calendario de Turnos";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/css/groomer-styles.css" asp-append-version="true">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    @* Formulario de Logout (muy importante para la seguridad) *@
+    <form id="logoutForm" method="post" action="/Account/Logout">
+        @Html.AntiForgeryToken()
+        <button class="logout-button" type="submit" id="logoutButton">Cerrar Sesión</button>
+    </form>
+
+    <div class="groomer-container">
+        <header class="groomer-header">
+            <h1 class="app-logo">Acqua Di Cane</h1>
+            @* Aquí puedes usar ViewData o un Modelo para pasar el nombre del peluquero *@
+            <h2 class="welcome-message">Bienvenido a su calendario <span id="groomerName"></span></h2>
+            <div class="month-navigation">
+                <button id="prevMonth" class="nav-button">&lt;</button>
+                <span id="currentMonthYear" class="month-display"></span>
+                <button id="nextMonth" class="nav-button">&gt;</button>
+            </div>
+        </header>
+
+        <main class="calendar-main">
+            <div id="groomerCalendarGrid" class="calendar-grid">
+                @* Aquí se generará el calendario dinámicamente con JavaScript *@
+            </div>
+        </main>
+
+        @* El botón de logout fijo ya está arriba, puedes decidir si lo quieres duplicado o solo uno.
+        Elimino el original para evitar duplicidad si el de arriba ya cumple la función. *@
+        @* <button id="logoutButton" class="logout-button">Cerrar Sesión</button> *@
+    </div>
+
+    @* MODALES (copiados directamente de tu HTML) *@
+    <div id="appointmentsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalDateTitle">Turnos para el <span id="selectedDateDisplay"></span></h3>
+                <button class="close-modal-button" id="closeModalButton">&times;</button>
+            </div>
+            <div class="modal-body" id="appointmentsContainer">
+                @* Aquí se cargarán las tarjetas de turnos *@
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+
+    <div id="notifyCompletionModal" class="modal-overlay">
+        <div class="modal-content small-modal">
+            <div class="modal-header">
+                <h3 class="app-logo-small">Notificar Finalización</h3>
+                <button class="close-modal-button" id="closeNotifyCompletionModalButton">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-message" id="notifyCompletionMessage">El turno de <span id="completedPetName"></span> el día <span id="completedDate"></span> a las <span id="completedTime"></span> ha terminado.</p>
+                <div class="input-group">
+                    <p class="observations-label">Observaciones:</p>
+                    <textarea id="completionObservations" placeholder="Si hay observaciones para indicar al dueño redáctalas en este campo."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="confirmCompletionButton">Notificar Finalización</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cancelAppointmentModal" class="modal-overlay">
+        <div class="modal-content small-modal">
+            <div class="modal-header">
+                <h3 class="app-logo-small">Cancelar Turno</h3>
+                <button class="close-modal-button" id="closeCancelAppointmentModalButton">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-message" id="cancelAppointmentMessage">El turno de <span id="canceledPetName"></span> el día <span id="canceledDate"></span> a las <span id="canceledTime"></span> será cancelado.</p>
+                <div class="input-group">
+                    <p class="observations-label">Informe al cliente el motivo de la cancelación...</p>
+                    <textarea id="cancellationReason" placeholder="Motivo de la cancelación"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="confirmCancellationButton">Cancelar Turno</button>
+            </div>
+        </div>
+    </div>
+
+    @* Scripts *@
+    <script src="~/lib/jquery/dist/jquery.min.js"></script> @* Asegúrate de tener jQuery en wwwroot/lib *@
+    <script src="~/js/groomer-calendar.js" asp-append-version="true"></script>
+</body>
+</html>

@@ -1,45 +1,38 @@
-﻿// wwwroot/js/admin-services-scripts.js
+﻿// admin-services-scripts.js
 
 document.addEventListener('DOMContentLoaded', function () {
 
     // --- Configuración API ---
     const API_BASE_URL = '/api/ServicioApi';
 
-    // --- Referencias a elementos del DOM para AGREGAR SERVICIO ---
-    const addServiceForm = document.getElementById('addServiceForm');
-    const addServiceNameInput = document.getElementById('addServiceName');
-    const addServiceDescriptionInput = document.getElementById('addServiceDescription');
-    const addServicePriceInput = document.getElementById('addServicePrice');
-    const addServiceDurationInput = document.getElementById('addServiceDuration');
-    const addServiceButton = document.getElementById('addServiceButton');
-
-    // --- Referencias a elementos del DOM para la TABLA DE SERVICIOS ---
+    // --- Referencias a elementos del DOM ---
+    const openAddServiceModalButton = document.getElementById('openAddServiceModalButton');
     const servicesTableBody = document.querySelector('#servicesTable tbody');
-    const selectedServiceNameDisplay = document.getElementById('selectedServiceName');
-    const modifyServiceButton = document.getElementById('modifyServiceButton');
-    const deleteServiceButton = document.getElementById('deleteServiceButton');
 
-    let selectedServiceId = null; // Para almacenar el ID del servicio seleccionado en la tabla
-
-    // --- Referencias a elementos del DOM para el MODAL DE EDICIÓN ---
-    const serviceModal = document.getElementById('serviceModal'); // El overlay/modal completo
+    // Elementos del Modal de Servicio (ADD/EDIT)
+    const serviceModal = document.getElementById('serviceModal');
     const closeServiceModalButton = document.getElementById('closeServiceModalButton');
-    const editServiceForm = document.getElementById('editServiceForm'); // El formulario dentro del modal
-    const modalServiceIdInput = document.getElementById('modalServiceId');
-    const modalEditServiceNameInput = document.getElementById('modalEditServiceName');
-    const modalEditServiceDescriptionInput = document.getElementById('modalEditServiceDescription');
-    const modalEditServicePriceInput = document.getElementById('modalEditServicePrice');
-    const modalEditServiceDurationInput = document.getElementById('modalEditServiceDuration');
-    const modalEditServiceEstaActivoCheckbox = document.getElementById('modalEditServiceEstaActivo');
-    const cancelEditServiceModalButton = document.getElementById('cancelEditServiceModalButton');
+    const serviceModalTitle = document.getElementById('serviceModalTitle');
+    const serviceForm = document.getElementById('serviceForm');
+    const serviceIdInput = document.getElementById('serviceId'); // Campo oculto para el ID
 
-    // --- Funciones de Utilidad para API y Modales ---
+    // Inputs del formulario del modal
+    const modalServiceNombreInput = document.getElementById('modalServiceNombre');
+    const modalServiceDescripcionInput = document.getElementById('modalServiceDescripcion');
+    const modalServicePrecioInput = document.getElementById('modalServicePrecio');
+    const modalServiceDuracionInput = document.getElementById('modalServiceDuracion');
+    const modalServiceEstaActivoCheckbox = document.getElementById('modalServiceEstaActivo');
+    const modalServiceEstaActivoGroup = document.getElementById('modalServiceEstaActivoGroup'); // Grupo para mostrar/ocultar
+
+    const saveServiceButton = document.getElementById('saveServiceButton');
+    const cancelServiceModalButton = document.getElementById('cancelServiceModalButton');
+
+    // --- Funciones de Utilidad (Centralizadas para API y Modales) ---
 
     function getAuthToken() {
         // Implementa la lógica para obtener tu token JWT (ej. de localStorage)
-        // Si no usas JWT, simplemente devuelve null o un string vacío.
         // return localStorage.getItem('authToken');
-        return null;
+        return null; // Por ahora, devuelve null si no usas JWT
     }
 
     async function makeApiRequest(url, method, data = null) {
@@ -65,8 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const response = await fetch(url, config);
 
-            // Manejar 204 No Content (para PUT y DELETE exitosos)
-            if (response.status === 204) {
+            if (response.status === 204) { // No Content
                 return null;
             }
 
@@ -76,16 +68,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 let errorMessage = `Error: ${response.status} ${response.statusText}`;
                 if (responseData && typeof responseData === 'object') {
                     if (responseData.errors) {
-                        // ASP.NET Core ModelState errors
                         const modelErrors = Object.values(responseData.errors).flat();
                         if (modelErrors.length > 0) {
-                            errorMessage = modelErrors.join('\n'); // Unir todos los mensajes de error
+                            errorMessage = modelErrors.join(', ');
+                        } else if (Array.isArray(responseData)) {
+                            errorMessage = responseData.join('\n');
                         }
                     } else if (responseData.message) {
-                        errorMessage = responseData.message; // Mensaje de error general de la API
+                        errorMessage = responseData.message;
                     }
                 } else if (typeof responseData === 'string') {
-                    errorMessage = responseData; // Mensaje de error directo del servidor
+                    errorMessage = responseData;
                 }
                 throw new Error(errorMessage);
             }
@@ -93,7 +86,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return responseData;
         } catch (error) {
             console.error('Error en la solicitud a la API:', error);
-            // Propagar el error para que pueda ser manejado por la función que llama
             throw error;
         }
     }
@@ -108,21 +100,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- Cargar Servicios (READ) ---
     async function loadServices() {
-        if (!servicesTableBody) return; // Salir si la tabla no existe
+        if (!servicesTableBody) return;
 
         try {
             const servicios = await makeApiRequest(API_BASE_URL, 'GET');
 
-            servicesTableBody.innerHTML = ''; // Limpiar la tabla existente
-            selectedServiceId = null; // Reiniciar selección
-            selectedServiceNameDisplay.textContent = 'Ninguno';
-            modifyServiceButton.disabled = true;
-            deleteServiceButton.disabled = true;
+            servicesTableBody.innerHTML = ''; // Limpiar la tabla
 
             if (servicios.length === 0) {
                 const row = servicesTableBody.insertRow();
                 const cell = row.insertCell(0);
-                cell.colSpan = 5; // Nombre, Descripción, Precio, Duración, Activo (5 columnas)
+                cell.colSpan = 6; // Nombre, Descripción, Precio, Duración, Activo, Acciones
                 cell.textContent = 'No hay servicios registrados.';
                 cell.style.textAlign = 'center';
                 cell.style.fontStyle = 'italic';
@@ -131,169 +119,142 @@ document.addEventListener('DOMContentLoaded', function () {
 
             servicios.forEach(servicio => {
                 const row = servicesTableBody.insertRow();
-                row.dataset.id = servicio.id; // Almacenar el ID en la fila
-                row.dataset.name = servicio.nombre; // Almacenar el nombre para el display
-
                 row.insertCell(0).textContent = servicio.nombre;
-                row.insertCell(1).textContent = servicio.descripcion || 'N/A'; // Mostrar N/A si no hay descripción
+                row.insertCell(1).textContent = servicio.descripcion || 'N/A';
                 row.insertCell(2).textContent = `$${servicio.precio.toFixed(2)}`;
                 row.insertCell(3).textContent = `${servicio.duracionEnMinutos} min`;
                 row.insertCell(4).textContent = servicio.estaActivo ? 'Sí' : 'No';
 
-                // Añadir evento click para seleccionar la fila
-                row.addEventListener('click', () => selectServiceRow(row, servicio.id, servicio.nombre));
+                // Celda de acciones con botones
+                const actionsCell = row.insertCell(5);
+                const editButton = document.createElement('button');
+                editButton.classList.add('btn-info', 'edit-service-btn');
+                editButton.textContent = 'Modificar';
+                editButton.dataset.id = servicio.id;
+                actionsCell.appendChild(editButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('btn-warning', 'delete-service-btn');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.dataset.id = servicio.id;
+                actionsCell.appendChild(deleteButton);
+            });
+
+            // Añadir event listeners a los botones de editar y eliminar
+            document.querySelectorAll('.edit-service-btn').forEach(button => {
+                button.addEventListener('click', (e) => editService(e.target.dataset.id));
+            });
+            document.querySelectorAll('.delete-service-btn').forEach(button => {
+                button.addEventListener('click', (e) => deleteService(e.target.dataset.id));
             });
 
         } catch (error) {
             console.error('Error al cargar servicios:', error);
-            servicesTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error al cargar servicios: ${error.message}</td></tr>`;
+            servicesTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error al cargar servicios: ${error.message}</td></tr>`;
         }
     }
 
-    // --- Seleccionar fila de la tabla ---
-    function selectServiceRow(row, id, name) {
-        // Quitar la clase 'selected' de todas las filas
-        document.querySelectorAll('#servicesTable tbody tr').forEach(r => {
-            r.classList.remove('selected');
+    // --- Abrir Modal para Agregar Servicio ---
+    if (openAddServiceModalButton) {
+        openAddServiceModalButton.addEventListener('click', () => {
+            serviceForm.reset(); // Limpiar el formulario
+            serviceIdInput.value = ''; // Asegurar que el ID esté vacío (modo creación)
+            serviceModalTitle.textContent = 'Registrar Nuevo Servicio';
+
+            modalServiceEstaActivoGroup.style.display = 'none'; // Ocultar "Está Activo" en modo creación
+            modalServiceEstaActivoCheckbox.checked = true; // Por defecto activo al crear
+
+            showModal(serviceModal);
         });
-
-        // Añadir la clase 'selected' a la fila clicada
-        row.classList.add('selected');
-
-        selectedServiceId = id;
-        selectedServiceNameDisplay.textContent = name;
-        modifyServiceButton.disabled = false;
-        deleteServiceButton.disabled = false;
     }
 
-    // --- AGREGAR Servicio (CREATE) ---
-    if (addServiceForm) {
-        addServiceForm.addEventListener('submit', async (e) => {
+    // --- Abrir Modal para Editar Servicio ---
+    async function editService(id) {
+        try {
+            const servicio = await makeApiRequest(`${API_BASE_URL}/${id}`, 'GET');
+
+            // Llenar el formulario con los datos del servicio
+            serviceIdInput.value = servicio.id;
+            modalServiceNombreInput.value = servicio.nombre;
+            modalServiceDescripcionInput.value = servicio.descripcion;
+            modalServicePrecioInput.value = servicio.precio;
+            modalServiceDuracionInput.value = servicio.duracionEnMinutos;
+            modalServiceEstaActivoCheckbox.checked = servicio.estaActivo;
+
+            serviceModalTitle.textContent = `Editar Servicio: ${servicio.nombre}`;
+
+            modalServiceEstaActivoGroup.style.display = 'block'; // Mostrar "Está Activo" en modo edición
+
+            showModal(serviceModal);
+
+        } catch (error) {
+            console.error('Error al cargar datos del servicio para edición:', error);
+            alert(`No se pudo cargar el servicio para editar: ${error.message}`);
+        }
+    }
+
+    // --- Enviar Formulario (CREATE/UPDATE) ---
+    if (serviceForm) {
+        serviceForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const newService = {
-                Nombre: addServiceNameInput.value,
-                Descripcion: addServiceDescriptionInput.value,
-                Precio: parseFloat(addServicePriceInput.value),
-                DuracionEnMinutos: parseInt(addServiceDurationInput.value),
-                EstaActivo: true // Por defecto, el nuevo servicio es activo
+            const id = serviceIdInput.value;
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API_BASE_URL}/${id}` : API_BASE_URL;
+
+            const formData = {
+                Id: id ? parseInt(id) : 0,
+                Nombre: modalServiceNombreInput.value,
+                Descripcion: modalServiceDescripcionInput.value,
+                Precio: parseFloat(modalServicePrecioInput.value), // Asegurarse de que sea número
+                DuracionEnMinutos: parseInt(modalServiceDuracionInput.value), // Asegurarse de que sea número
+                EstaActivo: id ? modalServiceEstaActivoCheckbox.checked : true, // Por defecto activo en POST
             };
 
-            // Validaciones básicas antes de enviar
-            if (!newService.Nombre || newService.Precio <= 0 || newService.DuracionEnMinutos <= 0) {
-                alert('Por favor, complete todos los campos obligatorios y asegúrese de que Precio y Duración sean valores positivos.');
-                return;
-            }
-
             try {
-                // El makeApiRequest ya maneja el JSON.stringify
-                await makeApiRequest(API_BASE_URL, 'POST', newService);
-                alert('Servicio agregado con éxito!');
-                addServiceForm.reset(); // Limpiar el formulario de agregar
-                loadServices(); // Recargar la tabla
-            } catch (error) {
-                console.error('Error al agregar servicio:', error);
-                alert(`Error al agregar servicio: ${error.message}`);
-            }
-        });
-    }
+                await makeApiRequest(url, method, formData);
 
-    // --- MODIFICAR Servicio (Abrir Modal - READ para EDIT) ---
-    if (modifyServiceButton) {
-        modifyServiceButton.addEventListener('click', async () => {
-            if (!selectedServiceId) {
-                alert('Por favor, selecciona un servicio para modificar.');
-                return;
-            }
-
-            try {
-                const serviceToEdit = await makeApiRequest(`${API_BASE_URL}/${selectedServiceId}`, 'GET');
-
-                // Llenar el formulario del modal de edición
-                modalServiceIdInput.value = serviceToEdit.id;
-                modalEditServiceNameInput.value = serviceToEdit.nombre;
-                modalEditServiceDescriptionInput.value = serviceToEdit.descripcion || '';
-                modalEditServicePriceInput.value = serviceToEdit.precio;
-                modalEditServiceDurationInput.value = serviceToEdit.duracionEnMinutos;
-                modalEditServiceEstaActivoCheckbox.checked = serviceToEdit.estaActivo;
-
-                showModal(serviceModal); // Mostrar el modal
-            } catch (error) {
-                console.error('Error al cargar servicio para edición:', error);
-                alert(`No se pudo cargar el servicio para editar: ${error.message}`);
-            }
-        });
-    }
-
-    // --- GUARDAR Cambios en el Modal (UPDATE) ---
-    if (editServiceForm) {
-        editServiceForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const updatedService = {
-                Id: parseInt(modalServiceIdInput.value),
-                Nombre: modalEditServiceNameInput.value,
-                Descripcion: modalEditServiceDescriptionInput.value,
-                Precio: parseFloat(modalEditServicePriceInput.value),
-                DuracionEnMinutos: parseInt(modalEditServiceDurationInput.value),
-                EstaActivo: modalEditServiceEstaActivoCheckbox.checked
-            };
-
-            // Validaciones básicas
-            if (!updatedService.Nombre || updatedService.Precio <= 0 || updatedService.DuracionEnMinutos <= 0) {
-                alert('Por favor, complete todos los campos obligatorios y asegúrese de que Precio y Duración sean valores positivos.');
-                return;
-            }
-
-            try {
-                await makeApiRequest(`${API_BASE_URL}/${updatedService.Id}`, 'PUT', updatedService);
-                alert('Servicio actualizado con éxito!');
                 hideModal(serviceModal); // Ocultar el modal
-                loadServices(); // Recargar la tabla
+                alert(`Servicio ${id ? 'actualizado' : 'registrado'} con éxito.`);
+                loadServices(); // Recargar la lista de servicios
+
             } catch (error) {
-                console.error('Error al actualizar servicio:', error);
-                alert(`Error al actualizar servicio: ${error.message}`);
+                console.error('Error al guardar servicio:', error);
+                alert(`Error al guardar servicio: ${error.message}`);
             }
         });
     }
 
-    // --- ELIMINAR Servicio (DELETE) ---
-    if (deleteServiceButton) {
-        deleteServiceButton.addEventListener('click', async () => {
-            if (!selectedServiceId) {
-                alert('Por favor, selecciona un servicio para eliminar.');
-                return;
-            }
+    // --- Eliminar Servicio (DELETE) ---
+    async function deleteService(id) {
+        if (!confirm('¿Estás seguro de que quieres eliminar este servicio? Esto no se puede deshacer.')) {
+            return;
+        }
 
-            if (!confirm(`¿Estás seguro de que quieres eliminar el servicio "${selectedServiceNameDisplay.textContent}"?`)) {
-                return; // Si el usuario cancela, no hacemos nada
-            }
-
-            try {
-                await makeApiRequest(`${API_BASE_URL}/${selectedServiceId}`, 'DELETE');
-                alert('Servicio eliminado con éxito!');
-                loadServices(); // Recargar la tabla
-            } catch (error) {
-                console.error('Error al eliminar servicio:', error);
-                alert(`Error al eliminar servicio: ${error.message}`);
-            }
-        });
+        try {
+            await makeApiRequest(`${API_BASE_URL}/${id}`, 'DELETE');
+            alert('Servicio eliminado con éxito.');
+            loadServices(); // Recargar la lista
+        } catch (error) {
+            console.error('Error al eliminar servicio:', error);
+            alert(`Error al eliminar servicio: ${error.message}`);
+        }
     }
 
-    // --- Cerrar Modal de Edición ---
+    // --- Cerrar Modales ---
     if (closeServiceModalButton) {
         closeServiceModalButton.addEventListener('click', () => {
             hideModal(serviceModal);
         });
     }
 
-    if (cancelEditServiceModalButton) {
-        cancelEditServiceModalButton.addEventListener('click', () => {
+    if (cancelServiceModalButton) {
+        cancelServiceModalButton.addEventListener('click', () => {
             hideModal(serviceModal);
         });
     }
 
-    // Cerrar modal al hacer click fuera (solo el overlay)
+    // Cerrar modal de servicio al hacer click fuera
     if (serviceModal) {
         serviceModal.addEventListener('click', function (event) {
             if (event.target === serviceModal) {
@@ -302,6 +263,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- Inicialización ---
-    loadServices(); // Cargar los servicios al cargar la página
+    // --- Cargar Servicios al inicio de la página (solo si estamos en la vista de servicios) ---
+    if (servicesTableBody) {
+        loadServices();
+    }
 });
