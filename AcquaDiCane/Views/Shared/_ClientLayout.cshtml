@@ -34,10 +34,11 @@
                 }
             </div>
             <div class="sidebar-nav">
-                <button class="sidebar-button active" data-section="overview">Registrar Mascota</button>
+                <button class="sidebar-button active" data-section="overview">Mis Mascotas</button> @* <-- CAMBIO AQUI: Ahora dice "Mis Mascotas" *@
+                <button class="sidebar-button" data-section="add-pet">Registrar Mascota</button> @* <-- NUEVO BOTÓN: Apunta a la sección "add-pet" *@
                 <button class="sidebar-button" data-section="schedule-appointment" id="btnPeluqueria">Peluquería</button>
                 <form id="logoutForm" class="form-inline" method="post" action="/Account/Logout">
-                    @Html.AntiForgeryToken() @* Añade el token antiforja aquí *@
+                    @Html.AntiForgeryToken()
                     <button class="sidebar-button" type="submit" id="logoutButton">Cerrar Sesión</button>
                 </form>
             </div>

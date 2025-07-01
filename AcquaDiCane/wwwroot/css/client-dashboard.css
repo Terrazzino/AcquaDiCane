@@ -22,19 +22,21 @@
     background-position: center;
     background-repeat: no-repeat;
     background-color: transparent; /* Esto es clave para el "tono azul" */
-    /* Si el tono azul persiste, verifica si hay un pseudo-elemento ::before o ::after en el inspector del navegador */
-    /* Por ejemplo, si ves esto: */
-    /*
-    &::before {
+    position: relative; /* Necesario para que z-index de los hijos y ::before/::after funcione */
+}
+
+    /* FIX: Asegura que cualquier pseudo-elemento que cause un overlay sea transparente o esté oculto */
+    .sidebar::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background-color: rgba(0,0,255,0.3); // ¡Este sería el causante!
-        z-index: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: transparent; /* O rgba(0,0,0,0.2) si quieres una ligera superposición oscura */
+        z-index: 0; /* Asegura que esté debajo del contenido */
+        display: none; /* Añadido para asegurar que no haya un overlay si no se desea */
     }
-    */
-    /* Si existe, tendrías que cambiar su background-color a transparent o un rgba más neutro como rgba(0,0,0,0.2) */
-}
 
     .sidebar > * { /* Asegurar que el contenido esté sobre el overlay (si lo hay) */
         z-index: 1;
@@ -106,8 +108,8 @@
     flex-grow: 1;
     padding: 30px;
     /* Main content debe ser transparente para que se vea el fondo de patitas del HTML
-       o para que las secciones internas (dashboard-section) puedan tener su propio fondo visible */
-    background-color: transparent;
+        o para que las secciones internas (dashboard-section) puedan tener su propio fondo visible */
+    background-color: transparent; /* Aseguramos la transparencia */
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.05); /* Sombra para el main-content sobre el fondo de patitas */
     margin: 20px;
@@ -572,6 +574,7 @@ form {
         background-color: #34495e; /* Un color sólido de respaldo para móviles */
     }
 
+        /* FIX: Asegura que el pseudo-elemento no se muestre en móviles si no se desea */
         .sidebar::before {
             display: none; /* Asegura que cualquier overlay de pseudo-elemento se desactive en móviles */
         }
@@ -597,7 +600,7 @@ form {
         margin: 15px;
         padding: 20px;
         /* En móvil, si la imagen de patitas es muy fuerte,
-           considera darle un background-color sólido aquí */
+            considera darle un background-color sólido aquí */
         background-color: #ffffff; /* Podrías volver a poner blanco aquí para móviles */
     }
 
@@ -613,9 +616,13 @@ form {
         grid-column: auto;
     }
 
+    .pets-grid {
+        max-width: 100%; /* Permite que el grid ocupe todo el ancho disponible en móvil */
+    }
+
     .pet-card {
-        max-width: 350px;
-        margin: auto;
+        max-width: 350px; /* Limita el ancho de la tarjeta individual si no es 100% */
+        margin: auto; /* Centra la tarjeta si no ocupa todo el ancho */
     }
 
     .appointment-card {

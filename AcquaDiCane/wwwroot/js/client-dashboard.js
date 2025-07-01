@@ -1,90 +1,50 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
-    const sidebarButtons = document.querySelectorAll('.sidebar-button'); // Ahora son botones
+    const clientId = document.getElementById('clientId')?.value;
+    const sidebarButtons = document.querySelectorAll('.sidebar-button');
     const dashboardSections = document.querySelectorAll('.dashboard-section');
-    const petsOverviewContainer = document.getElementById('petsOverviewContainer');
-    const noPetsMessage = document.getElementById('noPetsMessage');
-    const btnPeluqueria = document.getElementById('btnPeluqueria'); // El botón Peluquería
-    const logoutButton = document.getElementById('logoutButton');
 
-    // Forms & Messages
+    const noPetsMessage = document.getElementById('noPetsMessage');
+    const petsOverviewContainer = document.getElementById('petsOverviewContainer');
+
     const addPetForm = document.getElementById('addPetForm');
     const addPetMessages = document.getElementById('addPetMessages');
+    const noBreedCheckbox = document.getElementById('noBreedCheckbox');
+    const petBreedInput = document.getElementById('petBreed');
+
     const scheduleAppointmentForm = document.getElementById('scheduleAppointmentForm');
     const scheduleAppointmentMessages = document.getElementById('scheduleAppointmentMessages');
+    const appointmentPetSelect = document.getElementById('appointmentPet');
+    const appointmentDateInput = document.getElementById('appointmentDate');
+    const appointmentTimeInput = document.getElementById('appointmentTime');
+    const appointmentGroomerSelect = document.getElementById('appointmentGroomer');
+    const appointmentServiceSelect = document.getElementById('appointmentService');
+    const appointmentPriceInput = document.getElementById('appointmentPrice');
+    const btnPeluqueria = document.getElementById('btnPeluqueria'); // El botón de la sidebar
     const noPetsForAppointmentMessage = document.getElementById('noPetsForAppointmentMessage');
     const noServicesOrGroomersMessage = document.getElementById('noServicesOrGroomersMessage');
-    const appointmentPetSelect = document.getElementById('appointmentPet');
-    const appointmentServiceSelect = document.getElementById('appointmentService');
-    const appointmentGroomerSelect = document.getElementById('appointmentGroomer'); // Nuevo select de groomer
-    const appointmentPriceInput = document.getElementById('appointmentPrice');
     const appointmentsListContainer = document.getElementById('appointmentsListContainer');
 
-    // Profile elements (mantener si planeas dar acceso al perfil)
-    const profileName = document.getElementById('profileName');
-    const profileLastName = document.getElementById('profileLastName');
-    const profileEmail = document.getElementById('profileEmail');
-    const profilePhoneNumber = document.getElementById('profilePhoneNumber');
-    const profileBirthDate = document.getElementById('profileBirthDate');
     const editProfileBtn = document.getElementById('editProfileBtn');
+    const cancelEditProfileBtn = document.getElementById('cancelEditProfile');
     const editProfileFormContainer = document.getElementById('editProfileFormContainer');
     const editProfileForm = document.getElementById('editProfileForm');
-    const cancelEditProfile = document.getElementById('cancelEditProfile');
     const changePasswordForm = document.getElementById('changePasswordForm');
     const editProfileMessages = document.getElementById('editProfileMessages');
     const changePasswordMessages = document.getElementById('changePasswordMessages');
 
-    let availableServices = [];
-    let availableGroomers = [];
-    let currentUserPets = []; // Para almacenar las mascotas del usuario
+    // --- Funciones de Utilidad ---
 
-
-    // --- Utility Functions ---
-
-    /**
-     * Muestra un mensaje en un contenedor de formulario.
-     * @param {HTMLElement} container El contenedor del mensaje.
-     * @param {string} message El texto del mensaje.
-     * @param {boolean} isSuccess Si es true, el mensaje es de éxito; de lo contrario, de error.
-     */
-    function showFormMessage(container, message, isSuccess) {
-        container.innerHTML = message;
-        container.className = 'form-messages ' + (isSuccess ? 'success' : 'error');
-        container.style.display = 'block';
+    // Función para mostrar mensajes de éxito o error
+    function showMessage(element, message, type) {
+        element.textContent = message;
+        element.className = `form-messages ${type}`; // Reemplaza clases existentes
+        element.style.display = 'block';
+        setTimeout(() => {
+            element.style.display = 'none';
+        }, 5000); // Ocultar después de 5 segundos
     }
 
-    /**
-     * Oculta un mensaje de formulario.
-     * @param {HTMLElement} container El contenedor del mensaje.
-     */
-    function hideFormMessage(container) {
-        container.style.display = 'none';
-        container.innerHTML = '';
-        container.className = 'form-messages';
-    }
-
-    /**
-     * Formatea una fecha de YYYY-MM-DD a DD/MM/YYYY.
-     * @param {string} dateString La fecha en formato YYYY-MM-DD.
-     * @returns {string} La fecha formateada.
-     */
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    }
-
-    /**
-     * Formatea una hora de HH:MM:SS a HH:MM.
-     * @param {string} timeString La hora en formato HH:MM:SS.
-     * @returns {string} La hora formateada.
-     */
-    function formatTime(timeString) {
-        if (!timeString) return '';
-        const parts = timeString.split(':');
-        return `${parts[0]}:${parts[1]}`;
-    }
-
-    // --- Navigation Logic ---
+    // Función para cambiar de sección del dashboard
     function showSection(sectionId) {
         dashboardSections.forEach(section => {
             section.classList.remove('active');
@@ -97,718 +57,555 @@
                 button.classList.add('active');
             }
         });
-
-        // Lógica específica al cambiar de sección
-        if (sectionId === 'add-pet-section') {
-            addPetForm.reset();
-            hideFormMessage(addPetMessages);
-            document.getElementById('noBreedCheckbox').checked = false; // Reset checkbox
-            document.getElementById('petBreed').removeAttribute('readonly');
-            document.getElementById('petBreed').value = '';
-        } else if (sectionId === 'schedule-appointment-section') {
-            scheduleAppointmentForm.reset();
-            hideFormMessage(scheduleAppointmentMessages);
-            appointmentPriceInput.value = '';
-            loadPetsForAppointment();
-            loadAvailableServices();
-            loadAvailableGroomers();
-            loadAppointments(); // Cargar la lista de turnos del cliente
-        } else if (sectionId === 'overview-section') {
-            loadPets(); // Recargar mascotas para el overview
-            loadAppointments(); // Recargar turnos para el overview
-        } else if (sectionId === 'profile-section') {
-            loadProfile();
-            editProfileFormContainer.style.display = 'none';
-            hideFormMessage(editProfileMessages);
-            hideFormMessage(changePasswordMessages);
-            editProfileForm.reset();
-            changePasswordForm.reset();
-        }
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll al inicio de la página
     }
 
-    // Event listeners for sidebar buttons
+    // --- Gestión de Secciones (Botones de Sidebar) ---
     sidebarButtons.forEach(button => {
-        button.addEventListener('click', function (e) {
-            e.preventDefault();
-            const section = this.dataset.section + '-section';
-            showSection(section);
-        });
-    });
-
-    // Handle internal button clicks to switch sections (e.g., "Registrar mi primera mascota")
-    document.querySelectorAll('[data-section="add-pet-from-empty"]').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            showSection('add-pet-section');
-        });
-    });
-
-    document.querySelectorAll('[data-section="cancel-add-pet"]').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            showSection('overview-section');
-        });
-    });
-
-
-    // --- API Calls & Data Rendering ---
-
-    // Function to get current user ID
-    async function getCurrentUserId() {
-        try {
-            const response = await fetch('/api/accountapi/current-user-id'); // Ajusta la ruta si tu API Controller se llama diferente
-            if (!response.ok) {
-                if (response.status === 401) { // Unauthorized
-                    window.location.href = '/Account/Login'; // Redirigir al login si no está autenticado
+        button.addEventListener('click', function () {
+            const section = this.dataset.section;
+            if (section) {
+                showSection(`${section}-section`);
+                if (section === 'overview') {
+                    loadPets(); // Recargar mascotas al volver a la vista general
+                } else if (section === 'schedule-appointment') {
+                    if (btnPeluqueria.disabled) { // Si el botón de peluquería está deshabilitado
+                        showSection('add-pet-section'); // Forzar la sección de agregar mascota
+                        showMessage(addPetMessages, 'Para agendar un turno, primero debes registrar una mascota.', 'warning');
+                    } else {
+                        loadPetsForAppointment();
+                        loadGroomers();
+                        loadServices();
+                        loadAppointments();
+                    }
+                } else if (section === 'profile') {
+                    loadProfileData();
                 }
-                throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const userId = await response.json();
-            return userId;
-        } catch (error) {
-            console.error('Error al obtener el ID del usuario:', error);
-            // Considerar redirigir al login aquí también en caso de error de red
-            return null;
-        }
+        });
+    });
+
+    // Manejar el botón de "Registrar mi primera mascota" en la sección de "overview"
+    if (noPetsMessage) {
+        noPetsMessage.addEventListener('click', function (event) {
+            if (event.target.classList.contains('btn-primary')) {
+                showSection('add-pet-section');
+            }
+        });
     }
 
-    // Load Pets for Overview
+    // Manejar el enlace en el mensaje de error de "Agendar Turno"
+    if (noPetsForAppointmentMessage) {
+        noPetsForAppointmentMessage.addEventListener('click', function (event) {
+            if (event.target.dataset.section === 'add-pet') {
+                event.preventDefault(); // Evita el comportamiento de enlace por defecto
+                showSection('add-pet-section');
+            }
+        });
+    }
+
+    // --- Lógica de Mascotas ---
+
+    // Cargar y mostrar mascotas
     async function loadPets() {
-        petsOverviewContainer.innerHTML = ''; // Clear previous content
-        noPetsMessage.style.display = 'none'; // Hide "no pets" message by default
-        btnPeluqueria.disabled = true; // Disable "Peluqueria" button by default
-
+        if (!clientId) {
+            console.error('Client ID no encontrado.');
+            return;
+        }
         try {
-            const userId = await getCurrentUserId();
-            if (!userId) {
-                // Si el usuario no está identificado, el getCurrentUserId ya debería haber redirigido
-                return;
-            }
-
-            const response = await fetch(`/api/clientapi/pets?ownerId=${userId}`); // Ajusta la ruta
+            const response = await fetch(`/api/pets/client/${clientId}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            currentUserPets = await response.json(); // Store pets globally
-
-            if (currentUserPets.length === 0) {
-                noPetsMessage.style.display = 'block'; // Show "no pets" message
-                petsOverviewContainer.style.display = 'none'; // Hide pets grid
-            } else {
-                noPetsMessage.style.display = 'none'; // Hide "no pets" message
-                petsOverviewContainer.style.display = 'grid'; // Show pets grid
-                btnPeluqueria.disabled = false; // Enable "Peluqueria" button
-
-                currentUserPets.forEach(pet => {
-                    const petCard = document.createElement('div');
-                    petCard.classList.add('pet-card');
-                    petCard.innerHTML = `
-                        <div class="pet-card-header">${pet.name}</div>
-                        <div class="pet-card-body">
-                            <img src="${pet.profilePicUrl && !pet.profilePicUrl.startsWith('~') ? pet.profilePicUrl : '/img/default_pet.png'}" alt="Foto de ${pet.name}">
-                            <p><strong>Raza:</strong> ${pet.breed || (pet.noBreed ? 'Mestizo' : 'N/A')}</p>
-                            <p><strong>Tamaño:</strong> ${pet.size}</p>
-                            <p><strong>Sexo:</strong> ${pet.sex}</p>
-                            <p><strong>Peso:</strong> ${pet.weight} kg</p>
-                            <p><strong>Nacimiento:</strong> ${formatDate(pet.birthDate)}</p>
-                            <p><strong>Castrado:</strong> ${pet.castrated ? 'Sí' : 'No'}</p>
-                            <p><strong>Alergias:</strong> ${pet.allergies ? 'Sí' : 'No'}</p>
-                            <p><strong>Próximo Turno:</strong> <span id="nextAppointment-${pet.id}">Cargando...</span></p>
-                        </div>
-                        <div class="pet-card-actions">
-                            <button onclick="editPet(${pet.id})">Editar</button>
-                            <button onclick="deletePet(${pet.id})">Eliminar</button>
-                        </div>
-                    `;
-                    petsOverviewContainer.appendChild(petCard);
-                    loadNextAppointmentForPet(pet.id); // Load next appointment for each pet
-                });
-            }
+            const pets = await response.json();
+            displayPets(pets);
+            checkPetsAvailability(pets.length > 0); // Verifica si hay mascotas y actualiza el estado del botón de peluquería
         } catch (error) {
-            console.error('Error al cargar las mascotas:', error);
-            petsOverviewContainer.innerHTML = '<p class="error-message">Error al cargar las mascotas. Intente de nuevo más tarde.</p>';
-            noPetsMessage.style.display = 'none'; // Ensure this is hidden if there's an error
-            btnPeluqueria.disabled = true;
+            console.error('Error al cargar mascotas:', error);
+            // Podrías mostrar un mensaje de error al usuario aquí
         }
     }
 
-    // Load next appointment for a specific pet
-    async function loadNextAppointmentForPet(petId) {
-        const nextAppointmentSpan = document.getElementById(`nextAppointment-${petId}`);
-        if (!nextAppointmentSpan) return;
-
-        try {
-            const response = await fetch(`/api/clientapi/appointments/next?petId=${petId}`);
-            if (!response.ok) {
-                // If no next appointment, it's fine, just display "No tiene turnos reservados"
-                nextAppointmentSpan.textContent = 'No tiene turnos reservados';
-                return;
-            }
-            const appointment = await response.json();
-            if (appointment) {
-                nextAppointmentSpan.innerHTML = `${formatDate(appointment.date)} - ${formatTime(appointment.time)}<br>Servicio: ${appointment.service}`;
-            } else {
-                nextAppointmentSpan.textContent = 'No tiene turnos reservados';
-            }
-        } catch (error) {
-            console.error(`Error al cargar el próximo turno para la mascota ${petId}:`, error);
-            nextAppointmentSpan.textContent = 'Error al cargar el turno.';
-        }
-    }
-
-
-    // Load Appointments for "Mis Próximos Turnos" in the Peluqueria section
-    async function loadAppointments() {
-        appointmentsListContainer.innerHTML = '<p>Cargando turnos...</p>';
-        try {
-            const userId = await getCurrentUserId();
-            if (!userId) {
-                appointmentsListContainer.innerHTML = '<p class="error-message">No se pudo cargar los turnos. Usuario no identificado.</p>';
-                return;
-            }
-
-            const response = await fetch(`/api/clientapi/appointments?clientId=${userId}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const appointments = await response.json();
-
-            if (appointments.length === 0) {
-                appointmentsListContainer.innerHTML = '<p>No tienes turnos agendados.</p>';
-                return;
-            }
-
-            appointmentsListContainer.innerHTML = ''; // Clear loading message
-
-            appointments.forEach(appt => {
-                const appointmentCard = document.createElement('div');
-                appointmentCard.classList.add('appointment-card');
-                appointmentCard.innerHTML = `
-                    <div class="appointment-info">
-                        <h3>${appt.serviceName} para ${appt.petName}</h3>
-                        <p><strong>Fecha:</strong> ${formatDate(appt.date)}</p>
-                        <p><strong>Hora:</strong> ${formatTime(appt.time)}</p>
-                        <p><strong>Peluquero:</strong> ${appt.groomerName}</p>
-                        <p><strong>Precio:</strong> $${appt.price.toFixed(2)}</p>
+    // Mostrar las tarjetas de mascotas
+    function displayPets(pets) {
+        petsOverviewContainer.innerHTML = ''; // Limpiar contenedor
+        if (pets && pets.length > 0) {
+            noPetsMessage.style.display = 'none';
+            petsOverviewContainer.style.display = 'grid'; // Asegurar que el grid se muestre
+            pets.forEach(pet => {
+                const petCard = document.createElement('div');
+                petCard.className = 'pet-card';
+                petCard.innerHTML = `
+                    <div class="pet-card-header">${pet.name}</div>
+                    <div class="pet-card-body">
+                        <img src="${pet.profilePicUrl || '/img/default-pet.png'}" alt="Foto de ${pet.name}">
+                        <h3>${pet.name}</h3>
+                        <p><strong>Raza:</strong> ${pet.breed || 'Mestizo'}</p>
+                        <p><strong>Tamaño:</strong> ${pet.size}</p>
+                        <p><strong>Sexo:</strong> ${pet.sex}</p>
+                        <p><strong>Peso:</strong> ${pet.weight} kg</p>
+                        <p><strong>Nacimiento:</strong> ${new Date(pet.birthDate).toLocaleDateString()}</p>
+                        <p><strong>Castrado:</strong> ${pet.castrated ? 'Sí' : 'No'}</p>
+                        <p><strong>Alergias:</strong> ${pet.allergies ? 'Sí' : 'No'}</p>
                     </div>
-                    <div class="appointment-status status-${appt.status}">${appt.status}</div>
-                    <div class="appointment-actions">
-                        ${appt.status === 'Pendiente' || appt.status === 'Confirmado' ? `<button onclick="cancelAppointment(${appt.id})">Cancelar</button>` : ''}
+                    <div class="pet-card-actions">
+                        <button class="edit-pet-btn" data-pet-id="${pet.id}">Editar</button>
+                        <button class="delete-pet-btn" data-pet-id="${pet.id}">Eliminar</button>
                     </div>
                 `;
-                appointmentsListContainer.appendChild(appointmentCard);
+                petsOverviewContainer.appendChild(petCard);
             });
+            // Ocultar el botón "Registrar mi primera mascota" si ya hay mascotas
+            document.querySelector('#noPetsMessage .btn-primary').style.display = 'none';
 
-        } catch (error) {
-            console.error('Error al cargar los turnos:', error);
-            appointmentsListContainer.innerHTML = '<p class="error-message">Error al cargar los turnos. Intente de nuevo más tarde.</p>';
+        } else {
+            noPetsMessage.style.display = 'block';
+            petsOverviewContainer.style.display = 'none'; // Ocultar el grid si no hay mascotas
+            // Mostrar el botón "Registrar mi primera mascota"
+            document.querySelector('#noPetsMessage .btn-primary').style.display = 'block';
         }
     }
 
-    // Load Available Services for dropdown
-    async function loadAvailableServices() {
-        appointmentServiceSelect.innerHTML = '<option value="">Cargando servicios...</option>';
-        try {
-            const response = await fetch('/api/clientapi/services'); // Endpoint para servicios
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            availableServices = await response.json();
+    // Deshabilitar/Habilitar el botón de Peluquería y mostrar mensajes
+    function checkPetsAvailability(hasPets) {
+        if (hasPets) {
+            btnPeluqueria.disabled = false;
+            btnPeluqueria.classList.remove('disabled-button'); // Puedes añadir una clase para estilos
+            noPetsForAppointmentMessage.style.display = 'none';
+            scheduleAppointmentForm.style.display = 'block'; // Mostrar el formulario
+        } else {
+            btnPeluqueria.disabled = true;
+            btnPeluqueria.classList.add('disabled-button'); // Puedes añadir una clase para estilos
+            noPetsForAppointmentMessage.style.display = 'block';
+            scheduleAppointmentForm.style.display = 'none'; // Ocultar el formulario
+        }
+    }
 
-            if (availableServices.length === 0) {
-                appointmentServiceSelect.innerHTML = '<option value="">No hay servicios disponibles.</option>';
-                appointmentServiceSelect.disabled = true;
+
+    // Lógica para "Sin raza (mestizo)" checkbox
+    if (noBreedCheckbox && petBreedInput) {
+        noBreedCheckbox.addEventListener('change', function () {
+            if (this.checked) {
+                petBreedInput.value = 'Mestizo';
+                petBreedInput.disabled = true;
             } else {
-                appointmentServiceSelect.innerHTML = '<option value="">Seleccione un servicio...</option>';
-                appointmentServiceSelect.disabled = false;
-                availableServices.forEach(service => {
-                    const option = document.createElement('option');
-                    option.value = service.id;
-                    option.textContent = service.name;
-                    option.dataset.price = service.price; // Store price for easy access
-                    appointmentServiceSelect.appendChild(option);
-                });
+                petBreedInput.value = '';
+                petBreedInput.disabled = false;
             }
-            checkAppointmentFormEligibility(); // Check if form should be enabled
-        } catch (error) {
-            console.error('Error al cargar servicios:', error);
-            appointmentServiceSelect.innerHTML = '<option value="">Error al cargar servicios.</option>';
-            appointmentServiceSelect.disabled = true;
-            checkAppointmentFormEligibility();
-        }
+        });
     }
 
-    // Load Available Groomers for dropdown
-    async function loadAvailableGroomers() {
-        appointmentGroomerSelect.innerHTML = '<option value="">Cargando peluqueros...</option>';
-        try {
-            const response = await fetch('/api/clientapi/groomers'); // Endpoint para peluqueros
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            availableGroomers = await response.json();
+    // Enviar formulario de añadir mascota
+    if (addPetForm) {
+        addPetForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            addPetMessages.style.display = 'none'; // Ocultar mensajes previos
 
-            if (availableGroomers.length === 0) {
-                appointmentGroomerSelect.innerHTML = '<option value="">No hay peluqueros disponibles.</option>';
-                appointmentGroomerSelect.disabled = true;
-            } else {
-                appointmentGroomerSelect.innerHTML = '<option value="">Seleccione un peluquero...</option>';
-                appointmentGroomerSelect.disabled = false;
-                availableGroomers.forEach(groomer => {
-                    const option = document.createElement('option');
-                    option.value = groomer.id; // Usar ID del peluquero
-                    option.textContent = groomer.name;
-                    appointmentGroomerSelect.appendChild(option);
-                });
-            }
-            checkAppointmentFormEligibility(); // Check if form should be enabled
-        } catch (error) {
-            console.error('Error al cargar peluqueros:', error);
-            appointmentGroomerSelect.innerHTML = '<option value="">Error al cargar peluqueros.</option>';
-            appointmentGroomerSelect.disabled = true;
-            checkAppointmentFormEligibility();
-        }
-    }
-
-    // Load Pets for Appointment dropdown (only if pets exist)
-    async function loadPetsForAppointment() {
-        appointmentPetSelect.innerHTML = '<option value="">Cargando mascotas...</option>';
-        try {
-            const userId = await getCurrentUserId();
-            if (!userId) {
-                appointmentPetSelect.innerHTML = '<option value="">No se pudieron cargar las mascotas.</option>';
-                appointmentPetSelect.disabled = true;
+            if (!clientId) {
+                showMessage(addPetMessages, 'Error: No se pudo obtener el ID del cliente.', 'error');
                 return;
             }
 
-            const response = await fetch(`/api/clientapi/pets?ownerId=${userId}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            currentUserPets = await response.json(); // Update global pets list
+            const formData = new FormData(this);
+            formData.append('ClientId', clientId); // Añadir ClientId al FormData
 
-            if (currentUserPets.length === 0) {
-                appointmentPetSelect.innerHTML = '<option value="">No tienes mascotas registradas.</option>';
-                appointmentPetSelect.disabled = true;
-                noPetsForAppointmentMessage.style.display = 'block';
-                scheduleAppointmentForm.style.display = 'none'; // Hide form
-            } else {
-                appointmentPetSelect.innerHTML = '<option value="">Seleccione una mascota...</option>';
-                appointmentPetSelect.disabled = false;
-                noPetsForAppointmentMessage.style.display = 'none';
-                currentUserPets.forEach(pet => {
+            // Obtener el token anti-forja
+            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (antiForgeryToken) {
+                formData.append('__RequestVerificationToken', antiForgeryToken);
+            }
+
+            try {
+                const response = await fetch('/api/ClientApi/pets', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showMessage(addPetMessages, 'Mascota registrada con éxito!', 'success');
+                    addPetForm.reset(); // Limpiar el formulario
+                    petBreedInput.disabled = false; // Habilitar campo de raza
+                    noBreedCheckbox.checked = false; // Desmarcar checkbox
+                    loadPets(); // Recargar la lista de mascotas
+                    showSection('overview-section'); // Volver a la sección de mascotas
+                } else {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.errors ? Object.values(errorData.errors).flat().join('<br>') : (errorData.message || 'Error al registrar la mascota.');
+                    showMessage(addPetMessages, `Error: ${errorMessage}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(addPetMessages, 'Error de conexión o del servidor al registrar la mascota.', 'error');
+            }
+        });
+    }
+
+    // Botón Cancelar en el formulario de agregar mascota
+    document.querySelector('button[data-section="cancel-add-pet"]')?.addEventListener('click', function () {
+        addPetForm.reset();
+        petBreedInput.disabled = false;
+        noBreedCheckbox.checked = false;
+        showSection('overview-section');
+    });
+
+    // --- Lógica de Turnos de Peluquería ---
+
+    async function loadPetsForAppointment() {
+        appointmentPetSelect.innerHTML = '<option value="">Seleccione una mascota...</option>';
+        if (!clientId) return;
+
+        try {
+            const response = await fetch(`/api/pets/client/${clientId}`);
+            if (!response.ok) throw new Error('Failed to load pets');
+            const pets = await response.json();
+
+            if (pets.length > 0) {
+                pets.forEach(pet => {
                     const option = document.createElement('option');
                     option.value = pet.id;
                     option.textContent = pet.name;
                     appointmentPetSelect.appendChild(option);
                 });
-                checkAppointmentFormEligibility(); // Check if form should be enabled
+                noPetsForAppointmentMessage.style.display = 'none';
+                scheduleAppointmentForm.style.display = 'block';
+            } else {
+                noPetsForAppointmentMessage.style.display = 'block';
+                scheduleAppointmentForm.style.display = 'none';
             }
         } catch (error) {
-            console.error('Error al cargar mascotas para el turno:', error);
-            appointmentPetSelect.innerHTML = '<option value="">Error al cargar mascotas.</option>';
-            appointmentPetSelect.disabled = true;
-            noPetsForAppointmentMessage.style.display = 'block';
-            scheduleAppointmentForm.style.display = 'none';
+            console.error('Error loading pets for appointment:', error);
+            showMessage(scheduleAppointmentMessages, 'Error al cargar las mascotas para el turno.', 'error');
         }
     }
 
-    // Function to check if the appointment form should be visible/enabled
-    function checkAppointmentFormEligibility() {
-        const hasPets = currentUserPets && currentUserPets.length > 0;
-        const hasServices = availableServices && availableServices.length > 0;
-        const hasGroomers = availableGroomers && availableGroomers.length > 0;
-
-        if (!hasPets) {
-            noPetsForAppointmentMessage.style.display = 'block';
-            scheduleAppointmentForm.style.display = 'none';
-            noServicesOrGroomersMessage.style.display = 'none';
-        } else if (!hasServices || !hasGroomers) {
-            noPetsForAppointmentMessage.style.display = 'none';
-            scheduleAppointmentForm.style.display = 'none';
-            noServicesOrGroomersMessage.style.display = 'block';
-        } else {
-            noPetsForAppointmentMessage.style.display = 'none';
-            noServicesOrGroomersMessage.style.display = 'none';
-            scheduleAppointmentForm.style.display = 'block';
-        }
-    }
-
-
-    // Load Profile
-    async function loadProfile() {
+    async function loadGroomers() {
+        appointmentGroomerSelect.innerHTML = '<option value="">Seleccione un peluquero...</option>';
         try {
-            const userId = await getCurrentUserId();
-            if (!userId) {
-                console.error('No se pudo cargar el perfil. Usuario no identificado.');
+            const response = await fetch('/api/groomers');
+            if (!response.ok) throw new Error('Failed to load groomers');
+            const groomers = await response.json();
+            if (groomers.length > 0) {
+                groomers.forEach(groomer => {
+                    const option = document.createElement('option');
+                    option.value = groomer.id;
+                    option.textContent = groomer.name;
+                    appointmentGroomerSelect.appendChild(option);
+                });
+                noServicesOrGroomersMessage.style.display = 'none';
+            } else {
+                noServicesOrGroomersMessage.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading groomers:', error);
+            showMessage(scheduleAppointmentMessages, 'Error al cargar los peluqueros.', 'error');
+            noServicesOrGroomersMessage.style.display = 'block';
+        }
+    }
+
+    async function loadServices() {
+        appointmentServiceSelect.innerHTML = '<option value="">Seleccione un servicio...</option>';
+        try {
+            const response = await fetch('/api/services');
+            if (!response.ok) throw new Error('Failed to load services');
+            const services = await response.json();
+            if (services.length > 0) {
+                services.forEach(service => {
+                    const option = document.createElement('option');
+                    option.value = service.id;
+                    option.textContent = service.name;
+                    option.dataset.price = service.price; // Guardar el precio en un data-attribute
+                    appointmentServiceSelect.appendChild(option);
+                });
+                noServicesOrGroomersMessage.style.display = 'none';
+            } else {
+                noServicesOrGroomersMessage.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading services:', error);
+            showMessage(scheduleAppointmentMessages, 'Error al cargar los servicios.', 'error');
+            noServicesOrGroomersMessage.style.display = 'block';
+        }
+    }
+
+    // Actualizar precio estimado cuando se selecciona un servicio
+    if (appointmentServiceSelect && appointmentPriceInput) {
+        appointmentServiceSelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const price = selectedOption.dataset.price;
+            appointmentPriceInput.value = price ? `$${parseFloat(price).toFixed(2)}` : '';
+        });
+    }
+
+    async function loadAppointments() {
+        appointmentsListContainer.innerHTML = '<p>Cargando turnos...</p>';
+        if (!clientId) return;
+
+        try {
+            const response = await fetch(`/api/appointments/client/${clientId}`);
+            if (!response.ok) throw new Error('Failed to load appointments');
+            const appointments = await response.json();
+            displayAppointments(appointments);
+        } catch (error) {
+            console.error('Error loading appointments:', error);
+            appointmentsListContainer.innerHTML = '<p>Error al cargar los turnos.</p>';
+        }
+    }
+
+    function displayAppointments(appointments) {
+        appointmentsListContainer.innerHTML = '';
+        if (appointments.length === 0) {
+            appointmentsListContainer.innerHTML = '<p>No tienes turnos agendados.</p>';
+            return;
+        }
+
+        appointments.forEach(appt => {
+            const appointmentCard = document.createElement('div');
+            appointmentCard.className = 'appointment-card';
+            appointmentCard.innerHTML = `
+                <div class="appointment-info">
+                    <h3>Turno para ${appt.petName}</h3>
+                    <p><strong>Fecha:</strong> ${new Date(appt.date).toLocaleDateString()}</p>
+                    <p><strong>Hora:</strong> ${appt.time}</p>
+                    <p><strong>Servicio:</strong> ${appt.serviceName}</p>
+                    <p><strong>Peluquero:</strong> ${appt.groomerName}</p>
+                </div>
+                <span class="appointment-status status-${appt.status}">${appt.status}</span>
+                <div class="appointment-actions">
+                    ${appt.status === 'Pendiente' ? `<button class="cancel-appointment-btn" data-appointment-id="${appt.id}">Cancelar</button>` : ''}
+                </div>
+            `;
+            appointmentsListContainer.appendChild(appointmentCard);
+        });
+
+        // Añadir listeners a los botones de cancelar
+        appointmentsListContainer.querySelectorAll('.cancel-appointment-btn').forEach(button => {
+            button.addEventListener('click', async function () {
+                const appointmentId = this.dataset.appointmentId;
+                if (confirm('¿Estás seguro de que quieres cancelar este turno?')) {
+                    try {
+                        const response = await fetch(`/api/appointments/${appointmentId}/cancel`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value // Incluir token
+                            }
+                        });
+                        if (response.ok) {
+                            showMessage(scheduleAppointmentMessages, 'Turno cancelado con éxito.', 'success');
+                            loadAppointments(); // Recargar la lista de turnos
+                        } else {
+                            const errorData = await response.json();
+                            showMessage(scheduleAppointmentMessages, `Error al cancelar turno: ${errorData.message || 'Error desconocido'}`, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error cancelling appointment:', error);
+                        showMessage(scheduleAppointmentMessages, 'Error de conexión al cancelar turno.', 'error');
+                    }
+                }
+            });
+        });
+    }
+
+
+    // Enviar formulario de agendar turno
+    if (scheduleAppointmentForm) {
+        scheduleAppointmentForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            scheduleAppointmentMessages.style.display = 'none'; // Ocultar mensajes previos
+
+            const formData = {
+                PetId: appointmentPetSelect.value,
+                Date: appointmentDateInput.value,
+                Time: appointmentTimeInput.value,
+                GroomerId: appointmentGroomerSelect.value,
+                ServiceId: appointmentServiceSelect.value,
+                ClientId: clientId // Asegúrate de enviar el ClientId
+            };
+
+            // Validación básica de campos
+            let isValid = true;
+            if (!formData.PetId) { document.getElementById('errorAppointmentPet').textContent = 'Seleccione una mascota.'; isValid = false; } else { document.getElementById('errorAppointmentPet').textContent = ''; }
+            if (!formData.Date) { document.getElementById('errorAppointmentDate').textContent = 'Seleccione una fecha.'; isValid = false; } else { document.getElementById('errorAppointmentDate').textContent = ''; }
+            if (!formData.Time) { document.getElementById('errorAppointmentTime').textContent = 'Seleccione una hora.'; isValid = false; } else { document.getElementById('errorAppointmentTime').textContent = ''; }
+            if (!formData.GroomerId) { document.getElementById('errorAppointmentGroomer').textContent = 'Seleccione un peluquero.'; isValid = false; } else { document.getElementById('errorAppointmentGroomer').textContent = ''; }
+            if (!formData.ServiceId) { document.getElementById('errorAppointmentService').textContent = 'Seleccione un servicio.'; isValid = false; } else { document.getElementById('errorAppointmentService').textContent = ''; }
+
+            if (!isValid) {
+                showMessage(scheduleAppointmentMessages, 'Por favor, complete todos los campos requeridos.', 'error');
                 return;
             }
 
-            const response = await fetch(`/api/accountapi/profile?userId=${userId}`); // Endpoint para obtener el perfil del usuario
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const profileData = await response.json();
+            try {
+                const response = await fetch('/api/appointments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value // Incluir token
+                    },
+                    body: JSON.stringify(formData)
+                });
 
-            profileName.textContent = profileData.name || 'N/A';
-            profileLastName.textContent = profileData.lastName || 'N/A';
-            profileEmail.textContent = profileData.email || 'N/A';
-            profilePhoneNumber.textContent = profileData.phoneNumber || 'N/A';
-            profileBirthDate.textContent = formatDate(profileData.birthDate) || 'N/A';
-
-            // Populate edit form
-            document.getElementById('editName').value = profileData.name || '';
-            document.getElementById('editLastName').value = profileData.lastName || '';
-            document.getElementById('editPhoneNumber').value = profileData.phoneNumber || '';
-
-        } catch (error) {
-            console.error('Error al cargar el perfil:', error);
-            document.getElementById('profile-section').innerHTML = '<p class="error-message">Error al cargar el perfil. Intente de nuevo más tarde.</p>';
-        }
-    }
-
-    // --- Form Submissions ---
-
-    // Add Pet Form
-    addPetForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        hideFormMessage(addPetMessages);
-
-        const formData = new FormData(this);
-        formData.append('NoBreed', document.getElementById('noBreedCheckbox').checked);
-
-        const ownerId = await getCurrentUserId();
-        if (!ownerId) {
-            showFormMessage(addPetMessages, 'Error: Usuario no identificado. Por favor, inicie sesión nuevamente.', false);
-            return;
-        }
-        formData.append('OwnerId', ownerId);
-
-        try {
-            const response = await fetch('/api/clientapi/pets', { // Endpoint para agregar mascotas
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                showFormMessage(addPetMessages, 'Mascota registrada con éxito.', true);
-                this.reset();
-                showSection('overview-section'); // Go back to overview
-            } else {
-                const errorData = await response.json();
-                let errorMessage = 'Error al registrar mascota. Por favor, verifique los datos.';
-                if (errorData && errorData.errors) {
-                    errorMessage = Object.values(errorData.errors).flat().join('<br>');
-                } else if (typeof errorData === 'string') {
-                    errorMessage = errorData;
+                if (response.ok) {
+                    showMessage(scheduleAppointmentMessages, 'Turno agendado con éxito!', 'success');
+                    scheduleAppointmentForm.reset(); // Limpiar el formulario
+                    loadAppointments(); // Recargar la lista de turnos
+                } else {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.errors ? Object.values(errorData.errors).flat().join('<br>') : (errorData.message || 'Error al agendar el turno.');
+                    showMessage(scheduleAppointmentMessages, `Error: ${errorMessage}`, 'error');
                 }
-                showFormMessage(addPetMessages, errorMessage, false);
-            }
-        } catch (error) {
-            console.error('Error de red al registrar mascota:', error);
-            showFormMessage(addPetMessages, 'Error de conexión. Intente de nuevo más tarde.', false);
-        }
-    });
-
-    // Schedule Appointment Form
-    scheduleAppointmentForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        hideFormMessage(scheduleAppointmentMessages);
-
-        const petId = parseInt(appointmentPetSelect.value);
-        const serviceId = parseInt(appointmentServiceSelect.value);
-        const groomerId = parseInt(appointmentGroomerSelect.value); // Obtener ID del peluquero
-
-        const selectedService = availableServices.find(s => s.id === serviceId);
-        const selectedGroomer = availableGroomers.find(g => g.id === groomerId); // Encontrar el peluquero
-
-        const appointmentData = {
-            PetId: petId,
-            Date: document.getElementById('appointmentDate').value,
-            Time: document.getElementById('appointmentTime').value + ':00',
-            GroomerId: groomerId, // Ahora enviamos el ID del peluquero
-            ServiceId: serviceId, // Ahora enviamos el ID del servicio
-            Price: selectedService ? parseFloat(selectedService.price) : 0, // Usar el precio del servicio seleccionado
-            Status: "Pendiente"
-        };
-
-        const clientId = await getCurrentUserId();
-        if (!clientId) {
-            showFormMessage(scheduleAppointmentMessages, 'Error: Usuario no identificado. Por favor, inicie sesión nuevamente.', false);
-            return;
-        }
-        appointmentData.ClientId = clientId;
-
-        // Validaciones básicas del lado del cliente
-        let hasError = false;
-        document.querySelectorAll('#scheduleAppointmentForm .error-message').forEach(el => el.textContent = '');
-
-        if (!appointmentData.PetId) {
-            document.getElementById('errorAppointmentPet').textContent = 'Seleccione una mascota.';
-            hasError = true;
-        }
-        if (!appointmentData.Date) {
-            document.getElementById('errorAppointmentDate').textContent = 'Seleccione una fecha.';
-            hasError = true;
-        } else {
-            const selectedDate = new Date(appointmentData.Date);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (selectedDate < today) {
-                document.getElementById('errorAppointmentDate').textContent = 'La fecha no puede ser en el pasado.';
-                hasError = true;
-            }
-        }
-        if (!appointmentData.Time || appointmentData.Time === ':00') {
-            document.getElementById('errorAppointmentTime').textContent = 'Seleccione una hora.';
-            hasError = true;
-        }
-        if (!appointmentData.GroomerId) {
-            document.getElementById('errorAppointmentGroomer').textContent = 'Seleccione un peluquero.';
-            hasError = true;
-        }
-        if (!appointmentData.ServiceId) {
-            document.getElementById('errorAppointmentService').textContent = 'Seleccione un servicio.';
-            hasError = true;
-        }
-
-        if (hasError) {
-            showFormMessage(scheduleAppointmentMessages, 'Por favor, complete todos los campos obligatorios correctamente.', false);
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/clientapi/appointments', { // Endpoint para agendar turnos
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(appointmentData)
-            });
-
-            if (response.ok) {
-                showFormMessage(scheduleAppointmentMessages, 'Turno agendado con éxito.', true);
-                this.reset();
-                appointmentPriceInput.value = '';
-                loadAppointments(); // Recargar la lista de turnos
-                loadPets(); // Actualizar el "próximo turno" en las cards de mascotas
-            } else {
-                const errorData = await response.json();
-                let errorMessage = 'Error al agendar turno. Por favor, verifique los datos.';
-                if (errorData && errorData.errors) {
-                    errorMessage = Object.values(errorData.errors).flat().join('<br>');
-                } else if (typeof errorData === 'string') {
-                    errorMessage = errorData;
-                }
-                showFormMessage(scheduleAppointmentMessages, errorMessage, false);
-            }
-        } catch (error) {
-            console.error('Error de red al agendar turno:', error);
-            showFormMessage(scheduleAppointmentMessages, 'Error de conexión. Intente de nuevo más tarde.', false);
-        }
-    });
-
-    // Toggle Breed input
-    document.getElementById('noBreedCheckbox').addEventListener('change', function () {
-        const petBreedInput = document.getElementById('petBreed');
-        if (this.checked) {
-            petBreedInput.value = 'Mestizo';
-            petBreedInput.setAttribute('readonly', 'readonly');
-        } else {
-            petBreedInput.value = '';
-            petBreedInput.removeAttribute('readonly');
-        }
-    });
-
-    // Update estimated price based on service selection
-    appointmentServiceSelect.addEventListener('change', function () {
-        const selectedServiceId = parseInt(this.value);
-        const selectedService = availableServices.find(s => s.id === selectedServiceId);
-        appointmentPriceInput.value = selectedService ? selectedService.price.toFixed(2) : '0.00';
-    });
-
-
-    // --- Profile Edit Logic (Mantener, aunque no esté en el flujo principal) ---
-    editProfileBtn.addEventListener('click', function () {
-        editProfileFormContainer.style.display = 'block';
-        hideFormMessage(editProfileMessages);
-        hideFormMessage(changePasswordMessages);
-    });
-
-    cancelEditProfile.addEventListener('click', function () {
-        editProfileFormContainer.style.display = 'none';
-        editProfileForm.reset();
-        changePasswordForm.reset();
-        hideFormMessage(editProfileMessages);
-        hideFormMessage(changePasswordMessages);
-    });
-
-    editProfileForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        hideFormMessage(editProfileMessages);
-
-        const userId = await getCurrentUserId();
-        if (!userId) {
-            showFormMessage(editProfileMessages, 'Error: Usuario no identificado.', false);
-            return;
-        }
-
-        const updatedProfile = {
-            Name: document.getElementById('editName').value,
-            LastName: document.getElementById('editLastName').value,
-            PhoneNumber: document.getElementById('editPhoneNumber').value,
-        };
-
-        try {
-            const response = await fetch(`/api/accountapi/profile/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updatedProfile)
-            });
-
-            if (response.ok) {
-                showFormMessage(editProfileMessages, 'Perfil actualizado con éxito.', true);
-                loadProfile();
-                editProfileFormContainer.style.display = 'none';
-            } else {
-                const errorData = await response.json();
-                let errorMessage = 'Error al actualizar perfil.';
-                if (errorData && errorData.errors) {
-                    errorMessage = Object.values(errorData.errors).flat().join('<br>');
-                } else if (typeof errorData === 'string') {
-                    errorMessage = errorData;
-                }
-                showFormMessage(editProfileMessages, errorMessage, false);
-            }
-        } catch (error) {
-            console.error('Error de red al actualizar perfil:', error);
-            showFormMessage(editProfileMessages, 'Error de conexión. Intente de nuevo más tarde.', false);
-        }
-    });
-
-    changePasswordForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        hideFormMessage(changePasswordMessages);
-
-        const userId = await getCurrentUserId();
-        if (!userId) {
-            showFormMessage(changePasswordMessages, 'Error: Usuario no identificado.', false);
-            return;
-        }
-
-        const passwordData = {
-            OldPassword: document.getElementById('oldPassword').value,
-            NewPassword: document.getElementById('newPassword').value,
-            ConfirmNewPassword: document.getElementById('confirmNewPassword').value
-        };
-
-        if (passwordData.NewPassword !== passwordData.ConfirmNewPassword) {
-            showFormMessage(changePasswordMessages, 'La nueva contraseña y la confirmación no coinciden.', false);
-            return;
-        }
-        if (passwordData.NewPassword.length < 8 || !/[A-Z]/.test(passwordData.NewPassword) || !/[a-z]/.test(passwordData.NewPassword) || !/[0-9]/.test(passwordData.NewPassword)) {
-            showFormMessage(changePasswordMessages, 'La nueva contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.', false);
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/accountapi/change-password/${userId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(passwordData)
-            });
-
-            if (response.ok) {
-                showFormMessage(changePasswordMessages, 'Contraseña cambiada con éxito.', true);
-                this.reset();
-            } else {
-                const errorData = await response.json();
-                let errorMessage = 'Error al cambiar contraseña.';
-                if (errorData && errorData.errors) {
-                    errorMessage = Object.values(errorData.errors).flat().join('<br>');
-                } else if (typeof errorData === 'string') {
-                    errorMessage = errorData;
-                }
-                showFormMessage(changePasswordMessages, errorMessage, false);
-            }
-        } catch (error) {
-            console.error('Error de red al cambiar sesión:', error);
-            showFormMessage(changePasswordMessages, 'Error de conexión. Intente de nuevo más tarde.', false);
-        }
-    });
-
-    // --- Pet/Appointment Actions (Edit/Delete/Cancel) ---
-    // These functions need to be global or attached to window because they are called from inline onclick.
-    window.editPet = async function (petId) {
-        alert(`Funcionalidad de editar mascota (ID: ${petId}) - ¡Pendiente de implementar!`);
-        // Aquí podrías cargar los datos de la mascota en el formulario de agregar mascota
-        // y cambiar el botón de "Registrar" a "Actualizar".
-        // O abrir un modal/nueva sección de edición.
-    };
-
-    window.deletePet = async function (petId) {
-        if (!confirm('¿Estás seguro de que quieres eliminar esta mascota?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/clientapi/pets/${petId}`, {
-                method: 'DELETE'
-            });
-
-            if (response.ok) {
-                alert('Mascota eliminada con éxito.');
-                loadPets(); // Recargar la lista de mascotas
-                // No es necesario loadPetsForAppointment porque loadPets ya lo actualiza indirectamente
-            } else {
-                const errorData = await response.json();
-                alert(`Error al eliminar mascota: ${errorData.message || 'Error desconocido'}`);
-            }
-        } catch (error) {
-            console.error('Error de red al eliminar mascota:', error);
-            alert('Error de conexión al eliminar mascota.');
-        }
-    };
-
-    window.cancelAppointment = async function (appointmentId) {
-        if (!confirm('¿Estás seguro de que quieres cancelar este turno?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/clientapi/appointments/${appointmentId}/cancel`, {
-                method: 'PUT'
-            });
-
-            if (response.ok) {
-                alert('Turno cancelado con éxito.');
-                loadAppointments(); // Recargar la lista de turnos
-                loadPets(); // Para actualizar los próximos turnos en las cards de mascotas
-            } else {
-                const errorData = await response.json();
-                alert(`Error al cancelar turno: ${errorData.message || 'Error desconocido'}`);
-            }
-        } catch (error) {
-            console.error('Error de red al cancelar turno:', error);
-            alert('Error de conexión al cancelar turno.');
-        }
-    };
-
-    // --- Logout ---
-    const logoutButton = document.getElementById('logoutButton');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', function (e) {
-            if (!confirm('¿Estás seguro de que querés cerrar sesión?')) {
-                e.preventDefault();
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(scheduleAppointmentMessages, 'Error de conexión o del servidor al agendar el turno.', 'error');
             }
         });
     }
 
-    // Initial Load: Show overview and load initial data
-    showSection('overview-section');
-    loadPets(); // This will determine initial state of the dashboard
+    // --- Lógica de Perfil ---
+
+    async function loadProfileData() {
+        if (!clientId) {
+            console.error('Client ID no encontrado para cargar perfil.');
+            return;
+        }
+        try {
+            const response = await fetch(`/api/clientprofile/${clientId}`);
+            if (!response.ok) throw new Error('Failed to load profile data');
+            const profile = await response.json();
+
+            document.getElementById('profileName').textContent = profile.name;
+            document.getElementById('profileLastName').textContent = profile.lastName;
+            document.getElementById('profileEmail').textContent = profile.email;
+            document.getElementById('profilePhoneNumber').textContent = profile.phoneNumber || 'N/A';
+            document.getElementById('profileBirthDate').textContent = profile.birthDate ? new Date(profile.birthDate).toLocaleDateString() : 'N/A';
+
+            // Precargar el formulario de edición
+            document.getElementById('editName').value = profile.name;
+            document.getElementById('editLastName').value = profile.lastName;
+            document.getElementById('editPhoneNumber').value = profile.phoneNumber || '';
+
+        } catch (error) {
+            console.error('Error al cargar datos del perfil:', error);
+            // Podrías mostrar un mensaje de error en la sección de perfil
+        }
+    }
+
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', function () {
+            editProfileFormContainer.style.display = 'block';
+            editProfileBtn.style.display = 'none'; // Ocultar el botón de editar
+            loadProfileData(); // Asegurarse de que los datos estén cargados en el formulario
+        });
+    }
+
+    if (cancelEditProfileBtn) {
+        cancelEditProfileBtn.addEventListener('click', function () {
+            editProfileFormContainer.style.display = 'none';
+            editProfileBtn.style.display = 'block'; // Mostrar el botón de editar
+            editProfileForm.reset(); // Limpiar el formulario
+            editProfileMessages.style.display = 'none';
+        });
+    }
+
+    if (editProfileForm) {
+        editProfileForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            editProfileMessages.style.display = 'none';
+
+            if (!clientId) {
+                showMessage(editProfileMessages, 'Error: No se pudo obtener el ID del cliente.', 'error');
+                return;
+            }
+
+            const formData = {
+                Id: clientId, // Es importante enviar el ID del cliente
+                Name: document.getElementById('editName').value,
+                LastName: document.getElementById('editLastName').value,
+                PhoneNumber: document.getElementById('editPhoneNumber').value,
+                // No se edita BirthDate ni Email aquí según tu HTML
+            };
+
+            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            try {
+                const response = await fetch(`/api/clientprofile/${clientId}`, { // Usar el ID en la URL
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': antiForgeryToken
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    showMessage(editProfileMessages, 'Perfil actualizado con éxito!', 'success');
+                    loadProfileData(); // Recargar los datos mostrados
+                    editProfileFormContainer.style.display = 'none';
+                    editProfileBtn.style.display = 'block';
+                } else {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.errors ? Object.values(errorData.errors).flat().join('<br>') : (errorData.message || 'Error al actualizar el perfil.');
+                    showMessage(editProfileMessages, `Error: ${errorMessage}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(editProfileMessages, 'Error de conexión o del servidor al actualizar el perfil.', 'error');
+            }
+        });
+    }
+
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            changePasswordMessages.style.display = 'none';
+
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+            if (newPassword !== confirmNewPassword) {
+                showMessage(changePasswordMessages, 'La nueva contraseña y su confirmación no coinciden.', 'error');
+                return;
+            }
+
+            // Aquí puedes añadir más validaciones de contraseña (longitud, caracteres especiales, etc.)
+
+            const formData = {
+                OldPassword: oldPassword,
+                NewPassword: newPassword,
+                ConfirmNewPassword: confirmNewPassword
+            };
+
+            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            try {
+                const response = await fetch('/api/clientprofile/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': antiForgeryToken
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    showMessage(changePasswordMessages, 'Contraseña cambiada con éxito!', 'success');
+                    changePasswordForm.reset();
+                } else {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.errors ? Object.values(errorData.errors).flat().join('<br>') : (errorData.message || 'Error al cambiar la contraseña.');
+                    showMessage(changePasswordMessages, `Error: ${errorMessage}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(changePasswordMessages, 'Error de conexión o del servidor al cambiar la contraseña.', 'error');
+            }
+        });
+    }
+
+
+    // --- Inicialización ---
+    // Cargar las mascotas al inicio para determinar el estado del botón de peluquería
+    loadPets();
+    showSection('overview-section'); // Asegurarse de que la sección de mascotas esté activa al cargar
 });

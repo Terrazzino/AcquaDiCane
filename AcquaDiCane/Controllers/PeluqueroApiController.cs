@@ -50,12 +50,14 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
                     DNI = p.AplicationUser.DNI,
                     Email = p.AplicationUser.Email,
                     PhoneNumber = p.AplicationUser.PhoneNumber,
-                    FechaNacimiento = p.AplicationUser.FechaNacimiento.ToString("yyyy-MM-dd"),
+                    FechaNacimiento = p.AplicationUser.FechaNacimiento.HasValue ?
+                                      p.AplicationUser.FechaNacimiento.Value.ToString("yyyy-MM-dd") :
+                                      null, // O string.Empty, según cómo quieras representar una fecha nula en tu frontend
                     JornadasSemanales = p.JornadaSemanal.Select(j => new JornadaDiariaApiModel
                     {
                         Dia = j.Dia,
-                        HoraInicio = j.HoraInicio.ToString(@"hh\:mm"), // Formato HH:mm
-                        HoraFinal = j.HoraFinal.ToString(@"hh\:mm")    // Formato HH:mm
+                        HoraInicio = j.HoraInicio.ToString(@"HH\:mm"), // Formato HH:mm
+                        HoraFinal = j.HoraFinal.ToString(@"HH\:mm")    // Formato HH:mm
                     }).ToList()
                 })
                 .ToListAsync();
@@ -80,12 +82,14 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
                     DNI = p.AplicationUser.DNI,
                     Email = p.AplicationUser.Email,
                     PhoneNumber = p.AplicationUser.PhoneNumber,
-                    FechaNacimiento = p.AplicationUser.FechaNacimiento.ToString("yyyy-MM-dd"),
+                    FechaNacimiento = p.AplicationUser.FechaNacimiento.HasValue ?
+                                      p.AplicationUser.FechaNacimiento.Value.ToString("yyyy-MM-dd") :
+                                      null, // O string.Empty, según cómo quieras representar una fecha nula en tu frontend
                     JornadasSemanales = p.JornadaSemanal.Select(j => new JornadaDiariaApiModel
                     {
                         Dia = j.Dia,
-                        HoraInicio = j.HoraInicio.ToString(@"hh\:mm"), // Formato HH:mm
-                        HoraFinal = j.HoraFinal.ToString(@"hh\:mm")    // Formato HH:mm
+                        HoraInicio = j.HoraInicio.ToString(@"HH\:mm"), // Formato HH:mm
+                        HoraFinal = j.HoraFinal.ToString(@"HH\:mm")    // Formato HH:mm
                     }).ToList()
                 })
                 .FirstOrDefaultAsync();

@@ -1,14 +1,23 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity
+@using AcquaDiCane.Models.Identity
+@inject SignInManager<AplicationUser> SignInManager
+@inject UserManager<AplicationUser> UserManager
+
+@{
     ViewData["Title"] = "Acqua Di Cane - Mi Cuenta";
     Layout = "_ClientLayout";
 }
+
+@* Input oculto para obtener el ClientId en JavaScript. Es vital para las llamadas a la API. *@
+<input type="hidden" id="clientId" value="@(UserManager.GetUserAsync(User).Result?.Id)" />
+
 
 <section id="overview-section" class="dashboard-section active">
     @* Este es el contenido principal cuando no hay mascotas o cuando se ve el resumen *@
     <h1 class="main-title">Mis Mascotas</h1>
     <div id="noPetsMessage" class="info-message">
         <p>Aún no tienes mascotas registradas. ¡Registra una para empezar!</p>
-        <button class="btn-primary" data-section="add-pet-from-empty">Registrar mi primera mascota</button>
+        <button class="btn-primary" data-section="add-pet">Registrar mi primera mascota</button> @* <-- CAMBIO AQUI: Coherente con el nuevo botón del sidebar *@
     </div>
     <div id="petsOverviewContainer" class="pets-grid">
     </div>
@@ -17,6 +26,7 @@
 <section id="add-pet-section" class="dashboard-section">
     <h1 class="main-title">Registrar Nueva Mascota</h1>
     <form id="addPetForm" enctype="multipart/form-data">
+        @Html.AntiForgeryToken() @* <-- AÑADIDO: Token anti-forja para seguridad *@
         <div class="form-grid">
             <div class="input-group">
                 <label for="petName">Nombre</label>
@@ -81,7 +91,7 @@
     <p class="section-description">Selecciona a tu mascota y los detalles del turno.</p>
 
     <div id="noPetsForAppointmentMessage" class="error-message" style="display: none;">
-        <p><i class="fas fa-exclamation-triangle"></i> Para agendar un turno, primero debes <a href="#" data-section="add-pet-from-empty">registrar una mascota</a>.</p>
+        <p><i class="fas fa-exclamation-triangle"></i> Para agendar un turno, primero debes <a href="#" data-section="add-pet">registrar una mascota</a>.</p> @* <-- CAMBIO AQUI: Coherente con el nuevo botón del sidebar *@
     </div>
 
     <div id="noServicesOrGroomersMessage" class="warning-message" style="display: none;">
