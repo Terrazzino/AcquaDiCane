@@ -1,15 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
-using AcquaDiCane.Data; // Para tu Contexto
-using AcquaDiCane.Models; // Para tu modelo Peluquero
+﻿using AcquaDiCane.Data; // Para tu Contexto
+using AcquaDiCane.Models; // Para tu modelo Peluquero (asegúrate que JornadaDiaria.cs esté aquí)
+using AcquaDiCane.Models.DTOs; // Para tu modelo Peluquero (asegúrate que JornadaDiaria.cs esté aquí)
 using AcquaDiCane.Models.Identity; // Para tu AplicationUser
-using Microsoft.AspNetCore.Identity; // Para UserManager
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims; // Para obtener el ID del usuario
-using System.Collections.Generic; // Para ICollection
+using Microsoft.AspNetCore.Identity; // Para UserManager
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System; // Para TimeSpan y DateTime
+using System.Collections.Generic; // Para ICollection
+using System.ComponentModel.DataAnnotations; // Para los atributos de validación
+using System.Linq;
+using System.Security.Claims; // Para obtener el ID del usuario
+using System.Threading.Tasks;
 
 namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
 {
@@ -28,7 +30,6 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
             _userManager = userManager;
         }
 
-        // Helper para obtener el usuario actual de Identity (si lo necesitas, aunque el [Authorize] ya lo valida)
         private async Task<AplicationUser> GetCurrentUserAsync() => await _userManager.GetUserAsync(User);
 
 
@@ -36,32 +37,42 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
         // READ (GET) - Obtener todos los peluqueros
         // GET: api/PeluqueroApi
         [HttpGet]
-        public async Task<IActionResult> GetPeluqueros()
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<PeluqueroApiModel>>> GetPeluqueros()
         {
-            var peluqueros = await _context.Peluqueros
-                .Include(p => p.AplicationUser)
-                .Include(p => p.JornadaSemanal) // Incluir las jornadas diarias
-                .Select(p => new
-                {
-                    p.Id,
-                    AplicationUserId = p.AplicationUser.Id, // Incluir el AplicationUserId
-                    Nombre = p.AplicationUser.Nombre,
-                    Apellido = p.AplicationUser.Apellido,
-                    DNI = p.AplicationUser.DNI,
-                    Email = p.AplicationUser.Email,
-                    PhoneNumber = p.AplicationUser.PhoneNumber,
-                    FechaNacimiento = p.AplicationUser.FechaNacimiento.HasValue ?
-                                      p.AplicationUser.FechaNacimiento.Value.ToString("yyyy-MM-dd") :
-                                      null, // O string.Empty, según cómo quieras representar una fecha nula en tu frontend
-                    JornadasSemanales = p.JornadaSemanal.Select(j => new JornadaDiariaApiModel
+            try
+            {
+                var peluqueros = await _context.Peluqueros
+                    .Include(p => p.AplicationUser)
+                    .Include(p => p.JornadaSemanal)
+                    .Select(p => new PeluqueroApiModel
                     {
-                        Dia = j.Dia,
-                        HoraInicio = j.HoraInicio.ToString(@"HH\:mm"), // Formato HH:mm
-                        HoraFinal = j.HoraFinal.ToString(@"HH\:mm")    // Formato HH:mm
-                    }).ToList()
-                })
-                .ToListAsync();
-            return Ok(peluqueros);
+                        Id = p.Id,
+                        Nombre = p.AplicationUser.Nombre,
+                        Apellido = p.AplicationUser.Apellido,
+                        Email = p.AplicationUser.Email,
+                        PhoneNumber = p.AplicationUser.PhoneNumber,
+                        DNI = p.AplicationUser.DNI, // DNI está en AplicationUser
+                        FechaNacimiento = p.AplicationUser.FechaNacimiento,
+                        EstaActivo = p.AplicationUser.EmailConfirmed, // <=== Usar EmailConfirmed de AplicationUser para EstaActivo
+
+                        JornadasSemanales = p.JornadaSemanal.Select(j => new JornadaDiariaApiModel
+                        {
+                            Dia = j.Dia,
+                            HoraInicio = j.HoraInicio.ToString(@"hh\:mm"),
+                            HoraFinal = j.HoraFinal.ToString(@"hh\:mm")
+                        }).ToList()
+                    })
+                    .ToListAsync();
+
+                return Ok(peluqueros);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en GetPeluqueros: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                return StatusCode(500, "Error interno del servidor al cargar peluqueros.");
+            }
         }
 
         // READ (GET) - Obtener un peluquero por ID
@@ -114,6 +125,8 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
                 ModelState.AddModelError("Email", "Ya existe un usuario registrado con este correo electrónico.");
             }
 
+            // Si hay errores de validación de los atributos [Required], [EmailAddress], etc.
+            // o si la conversión de string a DateTime falló, ModelState.IsValid será false.
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -134,7 +147,12 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
             var createResult = await _userManager.CreateAsync(user, model.Password);
             if (!createResult.Succeeded)
             {
-                return BadRequest(createResult.Errors.Select(e => e.Description));
+                // Manejar errores de creación de usuario de Identity
+                foreach (var error in createResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return BadRequest(ModelState);
             }
 
             // 2. Asignar el rol de "Peluquero"
@@ -143,7 +161,11 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
             {
                 // Si falla la asignación de rol, intentamos borrar el usuario creado para limpiar
                 await _userManager.DeleteAsync(user);
-                return BadRequest(roleResult.Errors.Select(e => e.Description));
+                foreach (var error in roleResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return BadRequest(ModelState);
             }
 
             // 3. Crear el Perfil de Peluquero en tu tabla 'Peluqueros'
@@ -156,10 +178,13 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
             // 4. Asignar las jornadas semanales
             foreach (var jornadaModel in model.JornadasSemanales)
             {
+                // ===> CORRECCIÓN AQUÍ: Parsear string a TimeSpan <===
+                // Ahora que JornadaDiariaApiModel tiene strings, parseamos aquí para la entidad
                 if (TimeSpan.TryParse(jornadaModel.HoraInicio, out TimeSpan horaInicio) &&
                     TimeSpan.TryParse(jornadaModel.HoraFinal, out TimeSpan horaFinal))
                 {
-                    if (horaInicio < horaFinal) // Basic validation: start time must be before end time
+                    // Aquí añades validación de lógica de negocio (hora inicio < hora final)
+                    if (horaInicio < horaFinal)
                     {
                         peluquero.JornadaSemanal.Add(new JornadaDiaria
                         {
@@ -171,7 +196,7 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
                     }
                     else
                     {
-                        ModelState.AddModelError("JornadasSemanales", $"La hora de inicio debe ser anterior a la hora final para el día {jornadaModel.Dia}.");
+                        ModelState.AddModelError("JornadasSemanales", $"La hora de inicio ({jornadaModel.HoraInicio}) debe ser anterior a la hora final ({jornadaModel.HoraFinal}) para el día {jornadaModel.Dia}.");
                     }
                 }
                 else
@@ -204,9 +229,9 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
             }
 
             var peluquero = await _context.Peluqueros
-                                .Include(p => p.AplicationUser)
-                                .Include(p => p.JornadaSemanal) // Crucial for updating nested collection
-                                .FirstOrDefaultAsync(p => p.Id == id);
+                                        .Include(p => p.AplicationUser)
+                                        .Include(p => p.JornadaSemanal) // Crucial for updating nested collection
+                                        .FirstOrDefaultAsync(p => p.Id == id);
 
             if (peluquero == null)
             {
@@ -244,7 +269,11 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
             var userUpdateResult = await _userManager.UpdateAsync(user);
             if (!userUpdateResult.Succeeded)
             {
-                return BadRequest(userUpdateResult.Errors.Select(e => e.Description));
+                foreach (var error in userUpdateResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return BadRequest(ModelState);
             }
 
             // **Actualizar las Jornadas Semanales**
@@ -255,6 +284,7 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
             // Añadir las nuevas jornadas
             foreach (var jornadaModel in model.JornadasSemanales)
             {
+                // ===> CORRECCIÓN AQUÍ: Parsear string a TimeSpan <===
                 if (TimeSpan.TryParse(jornadaModel.HoraInicio, out TimeSpan horaInicio) &&
                     TimeSpan.TryParse(jornadaModel.HoraFinal, out TimeSpan horaFinal))
                 {
@@ -269,7 +299,7 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
                     }
                     else
                     {
-                        ModelState.AddModelError("JornadasSemanales", $"La hora de inicio debe ser anterior a la hora final para el día {jornadaModel.Dia}.");
+                        ModelState.AddModelError("JornadasSemanales", $"La hora de inicio ({jornadaModel.HoraInicio}) debe ser anterior a la hora final ({jornadaModel.HoraFinal}) para el día {jornadaModel.Dia}.");
                     }
                 }
                 else
@@ -280,7 +310,7 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
 
             if (!ModelState.IsValid)
             {
-                // Si hubo errores de parseo de tiempo o validación, regresamos Bad Request
+                // Si hubo errores de validación, regresamos Bad Request
                 return BadRequest(ModelState);
             }
 
@@ -343,47 +373,9 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
         }
     }
 
-    // ----------------------------------------
-    // Modelos para la creación y actualización de Peluqueros (ViewModels/DTOs)
-    // IDEALMENTE: Mueve estos modelos a una carpeta 'DTOs' o 'ViewModels'
-    public class JornadaDiariaApiModel
-    {
-        public string Dia { get; set; } // Ej: "Lunes", "Martes"
-        public string HoraInicio { get; set; } // Ej: "09:00"
-        public string HoraFinal { get; set; } // Ej: "18:00"
-    }
 
-    public class PeluqueroCreateModel
-    {
-        // Propiedades para AplicationUser
-        public string Nombre { get; set; }
-        public string Apellido { get; set; }
-        public string DNI { get; set; }
-        public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public DateTime FechaNacimiento { get; set; }
-        public string Password { get; set; } // Contraseña para el nuevo usuario
 
-        // Nuevo: Colección para las jornadas diarias
-        public ICollection<JornadaDiariaApiModel> JornadasSemanales { get; set; } = new List<JornadaDiariaApiModel>();
-    }
+    
 
-    public class PeluqueroUpdateModel
-    {
-        public int Id { get; set; } // ID del perfil de Peluquero
-
-        // Propiedades para AplicationUser
-        public string Nombre { get; set; }
-        public string Apellido { get; set; }
-        public string DNI { get; set; }
-        public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public DateTime FechaNacimiento { get; set; }
-
-        // Propiedades específicas de Peluquero
-        public bool EstaActivo { get; set; } // Para activar/desactivar el peluquero
-
-        // Nuevo: Colección para las jornadas diarias
-        public ICollection<JornadaDiariaApiModel> JornadasSemanales { get; set; } = new List<JornadaDiariaApiModel>();
-    }
+    
 }

@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Función centralizada para realizar solicitudes a la API
     async function makeApiRequest(url, method, data = null) {
-        const token = getAuthToken();
+        const token = getAuthToken(); // Assuming getAuthToken() is defined elsewhere
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -77,37 +77,60 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const response = await fetch(url, config);
 
-            // Si es 204 No Content (DELETE/PUT exitoso sin retorno)
+            // First, handle 204 No Content (no body to parse)
             if (response.status === 204) {
                 return null;
             }
 
-            const responseData = await response.json();
+            let responseData = null;
+            const contentType = response.headers.get("content-type");
+
+            // Check if the response has content and is JSON before parsing
+            // This prevents "Unexpected end of JSON input" on empty/non-JSON error responses
+            if (contentType && contentType.includes("application/json") && response.headers.get("content-length") !== "0") {
+                try {
+                    responseData = await response.json();
+                } catch (jsonParseError) {
+                    // If it's a 4xx/5xx but json() still fails, it's a malformed/empty JSON error response
+                    console.error("Error parsing JSON response for status:", response.status, jsonParseError);
+                    throw new Error(`El servidor respondió con un error (Status: ${response.status}), pero no se pudo parsear la respuesta como JSON válido.`);
+                }
+            }
+
 
             if (!response.ok) {
                 let errorMessage = `Error: ${response.status} ${response.statusText}`;
+
                 if (responseData && typeof responseData === 'object') {
-                    if (responseData.errors) { // Errores de ModelState o Identity (C#)
-                        // Para ModelState errors (objeto donde cada clave es un campo con un array de errores)
+                    if (responseData.errors) { // Standard for ValidationProblemDetails (e.g., from [ApiController])
                         const modelErrors = Object.values(responseData.errors).flat();
                         if (modelErrors.length > 0) {
-                            errorMessage = modelErrors.join(', ');
-                        } else if (Array.isArray(responseData)) { // Para errores de Identity (array de strings)
-                            errorMessage = responseData.join('\n');
+                            errorMessage += "\nDetalles de validación:\n" + modelErrors.join(', ');
+                        } else if (Array.isArray(responseData)) { // For Identity errors (array of strings)
+                            errorMessage += "\n" + responseData.join('\n');
                         }
-                    } else if (responseData.message) { // Mensajes de error personalizados
-                        errorMessage = responseData.message;
+                    } else if (responseData.title && responseData.detail) { // Generic ProblemDetails (RFC 7807)
+                        errorMessage += `\n${responseData.title}: ${responseData.detail}`;
+                    } else if (responseData.message) { // Custom error messages
+                        errorMessage += `\n${responseData.message}`;
+                    } else { // Fallback for other structured JSON errors
+                        errorMessage += "\n" + JSON.stringify(responseData, null, 2);
                     }
-                } else if (typeof responseData === 'string') { // Si la respuesta es solo texto de error
-                    errorMessage = responseData;
+                } else if (typeof responseData === 'string' && responseData.trim() !== '') { // If the response is just plain text error
+                    errorMessage += `\n${responseData}`;
+                } else if (!responseData && response.status !== 204) { // No responseData, not 204, indicates empty body on error
+                    errorMessage += `\nEl servidor respondió con un error (${response.status}), pero el cuerpo de la respuesta estaba vacío.`;
                 }
-                throw new Error(errorMessage);
+
+                throw new Error(errorMessage); // Re-throw with more specific error details
             }
 
+            // For successful responses (response.ok is true, and not 204), return the parsed data
             return responseData;
+
         } catch (error) {
             console.error('Error en la solicitud a la API:', error);
-            throw error; // Re-lanza el error para que sea manejado por la función que llama
+            throw error; // Re-throw the error to be handled by the calling function
         }
     }
 
@@ -476,3 +499,4 @@ document.addEventListener('DOMContentLoaded', function () {
         loadGroomers();
     }
 });
+
