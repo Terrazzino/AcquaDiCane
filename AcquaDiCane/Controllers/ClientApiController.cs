@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AcquaDiCane.Data; // Para tu Contexto
 using AcquaDiCane.Models; // Para tus modelos Mascota, Turno, Servicio, Peluquero, Cliente, DetalleDelTurno, Pago
+using AcquaDiCane.Models.DTOs; // Para tus modelos Mascota, Turno, Servicio, Peluquero, Cliente, DetalleDelTurno, Pago
 using AcquaDiCane.Models.Identity; // Para tu AplicationUser
 using AcquaDiCane.Models.InputModels;
 // Si los InputModels están en AcquaDiCane.Models, ya estaría cubierta por la línea de arriba.
@@ -67,34 +68,48 @@ public class ClientApiController : ControllerBase
 
     // GET: api/ClientApi/pets
     [HttpGet("pets")]
-    public async Task<IActionResult> GetPets()
+    public async Task<ActionResult<IEnumerable<MascotaApiModel>>> GetPetsForClient(int clientId)
     {
-        var clienteProfile = await GetClienteProfileAsync();
-        if (clienteProfile == null)
+        // Obtén el usuario autenticado para asegurarte de que el clientId que se pide es el del usuario logueado
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
         {
-            return Unauthorized("Perfil de cliente no encontrado para el usuario actual o usuario no autenticado.");
+            return Unauthorized("Usuario no autenticado."); // Debería ser 401 si no hay token
         }
 
+        // El clientId que viene del frontend es el ApplicationUserId (string)
+        if (clientId != currentUser.Id)
+        {
+            return Forbid("No tiene permiso para ver las mascotas de otro cliente."); // 403 Forbidden
+        }
+
+        // Busca el cliente real en tu tabla Clientes usando el ApplicationUserId
+        var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.AplicationUserId == currentUser.Id);
+        if (cliente == null)
+        {
+            return NotFound("Perfil de cliente no encontrado para el usuario actual.");
+        }
+
+        // Ahora, busca las mascotas asociadas con el ID del Cliente (int) de tu entidad Cliente
         var mascotas = await _context.Mascotas
-                                     .Where(p => p.ClienteAsignadoId == clienteProfile.Id)
-                                     .Select(p => new
-                                     {
-                                         id = p.Id,
-                                         name = p.Nombre,
-                                         size = p.Tamaño,
-                                         sex = p.Sexo,
-                                         breed = p.Raza,
-                                         sinRaza = p.SinRaza,
-                                         weight = p.Peso,
-                                         castrated = p.Castrado,
-                                         birthDate = p.FechaNacimiento.ToString("yyyy-MM-dd"),
-                                         allergies = p.Alergico,
-                                         profilePicUrl = p.UrlFotoPerfil
-                                     })
-                                     .ToListAsync();
+                                    .Where(m => m.ClienteAsignadoId == cliente.Id) // <-- Usar ClienteAsignadoId
+                                    .Select(m => new MascotaApiModel // Necesitas definir MascotaApiModel
+                                    {
+                                        Id = m.Id,
+                                        Name = m.Nombre, // Asegúrate de que los nombres de propiedades coincidan con el frontend (pet.name)
+                                        Breed = m.Raza,
+                                        Size = m.Tamaño,
+                                        Sex = m.Sexo,
+                                        Weight = m.Peso,
+                                        BirthDate = m.FechaNacimiento,
+                                        Castrated = m.Castrado,
+                                        Allergies = m.Alergico, // Asegúrate que coincida con pet.allergies
+                                        ProfilePicUrl = m.UrlFotoPerfil // Asegúrate que coincida con pet.profilePicUrl
+                                    })
+                                    .ToListAsync();
+
         return Ok(mascotas);
     }
-
     // GET: api/ClientApi/pets/5 (para editar mascota)
     [HttpGet("pets/{id}")]
     public async Task<IActionResult> GetPet(int id)
@@ -131,65 +146,80 @@ public class ClientApiController : ControllerBase
     // POST: api/ClientApi/pets
     [HttpPost("pets")]
     [ValidateAntiForgeryToken] // Añade esto si tu frontend envía el token y lo quieres validar
-    public async Task<IActionResult> AddPet([FromForm] MascotaInputModel model)
+    public async Task<IActionResult> AddPet([FromForm] MascotaCreateModel model) // <-- [FromForm] para datos multipart/form-data
     {
-        var clienteProfile = await GetClienteProfileAsync();
-        if (clienteProfile == null)
+        // Obtener el usuario autenticado para vincular la mascota
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
         {
-            return Unauthorized("Perfil de cliente no encontrado para el usuario actual o usuario no autenticado.");
+            return Unauthorized("Usuario no autenticado.");
         }
 
-        // Sobrescribir el ClienteAsignadoId del modelo con el ID del cliente autenticado
-        model.ClienteAsignadoId = clienteProfile.Id;
+        // Obtener el perfil de Cliente asociado al AplicationUser
+        var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.AplicationUserId == currentUser.Id);
+        if (cliente == null)
+        {
+            return BadRequest("No se encontró un perfil de cliente asociado al usuario autenticado.");
+        }
 
         if (!ModelState.IsValid)
         {
-            var errors = ModelState.Values
-                                    .SelectMany(v => v.Errors)
-                                    .Select(e => e.ErrorMessage)
-                                    .ToList();
-            return BadRequest(new { errors = errors, message = "Datos de mascota inválidos." });
+            // Gracias a la configuración en Program.cs, esto devolverá el JSON de errores.
+            return BadRequest(ModelState);
         }
 
-        // Manejo de la imagen de perfil
-        string profilePicUrl = "/img/default-pet.png"; // Valor por defecto
+        string profilePicUrl = null;
         if (model.ProfilePic != null && model.ProfilePic.Length > 0)
         {
-            var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "pet_profiles");
+            // Guarda la imagen en un directorio wwwroot/uploads/pets o similar
+            var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "pets");
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
             }
-
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.ProfilePic.FileName);
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ProfilePic.FileName;
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await model.ProfilePic.CopyToAsync(fileStream);
             }
-            profilePicUrl = $"/uploads/pet_profiles/{uniqueFileName}";
+            profilePicUrl = $"/uploads/pets/{uniqueFileName}"; // URL relativa para acceder desde el frontend
         }
 
-        var mascota = new Mascota
+        var nuevaMascota = new Mascota
         {
-            Nombre = model.Name,
-            Raza = model.SinRaza ? "Mestizo" : model.Breed,
-            SinRaza = model.SinRaza,
+            Nombre = model.Name, // Mapea del DTO al modelo de base de datos
+            Raza = model.Breed,
             Tamaño = model.Size,
             Sexo = model.Sex,
             Peso = model.Weight,
             FechaNacimiento = model.BirthDate,
             Castrado = model.Castrated,
-            Alergico = model.Allergies,
-            UrlFotoPerfil = profilePicUrl,
-            ClienteAsignadoId = model.ClienteAsignadoId
+            Alergico = model.Allergies, // Tu entidad Mascota tiene 'Alergico', no 'Allergies'
+            ClienteAsignadoId = cliente.Id, // Asigna el ID del cliente (int)
+            UrlFotoPerfil = profilePicUrl
         };
 
-        _context.Mascotas.Add(mascota);
+        _context.Mascotas.Add(nuevaMascota);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Mascota registrada con éxito.", petId = mascota.Id, clientId = clienteProfile.Id });
+        // Puedes devolver la mascota recién creada o un DTO de confirmación
+        var mascotaCreadaDto = new MascotaApiModel
+        {
+            Id = nuevaMascota.Id,
+            Name = nuevaMascota.Nombre,
+            Breed = nuevaMascota.Raza,
+            Size = nuevaMascota.Tamaño,
+            Sex = nuevaMascota.Sexo,
+            Weight = nuevaMascota.Peso,
+            BirthDate = nuevaMascota.FechaNacimiento,
+            Castrated = nuevaMascota.Castrado,
+            Allergies = nuevaMascota.Alergico,
+            ProfilePicUrl = nuevaMascota.UrlFotoPerfil
+        };
+
+        return CreatedAtAction(nameof(GetPet), new { id = nuevaMascota.Id }, mascotaCreadaDto);
     }
 
     // PUT: api/ClientApi/pets/5

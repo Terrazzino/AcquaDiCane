@@ -1,5 +1,4 @@
-﻿using AcquaDiCane.Web.Controllers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace AcquaDiCane.Models.DTOs
@@ -12,10 +11,9 @@ namespace AcquaDiCane.Models.DTOs
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public string DNI { get; set; }
-        public DateTime? FechaNacimiento { get; set; } // O DateTime, si sabes que siempre tendrá valor
-        public bool EstaActivo { get; set; } // Asumiendo que esta propiedad está en tu entidad Peluquero
+        public DateTime? FechaNacimiento { get; set; }
+        public bool EstaActivo { get; set; }
 
-        public List<JornadaDiariaApiModel> JornadasSemanales { get; set; } // Nombre plural para consistencia
+        public List<JornadaDiariaApiModel> JornadasSemanales { get; set; }
     }
 }
-    

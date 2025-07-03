@@ -99,8 +99,8 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
                     JornadasSemanales = p.JornadaSemanal.Select(j => new JornadaDiariaApiModel
                     {
                         Dia = j.Dia,
-                        HoraInicio = j.HoraInicio.ToString(@"HH\:mm"), // Formato HH:mm
-                        HoraFinal = j.HoraFinal.ToString(@"HH\:mm")    // Formato HH:mm
+                        HoraInicio = j.HoraInicio.ToString(@"hh\:mm"), // Formato HH:mm
+                        HoraFinal = j.HoraFinal.ToString(@"hh\:mm")    // Formato HH:mm
                     }).ToList()
                 })
                 .FirstOrDefaultAsync();

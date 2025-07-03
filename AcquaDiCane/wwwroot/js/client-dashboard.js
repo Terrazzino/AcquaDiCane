@@ -106,23 +106,45 @@
 
     // --- Lógica de Mascotas ---
 
+
     // Cargar y mostrar mascotas
+
+
+
     async function loadPets() {
+        const clientId = document.getElementById('clientId').value; // Obtener el clientId del input oculto
+        const token = localStorage.getItem('jwtToken'); // Obtener el token
+
         if (!clientId) {
             console.error('Client ID no encontrado.');
             return;
         }
+        if (!token) {
+            console.error('Token de autenticación no encontrado. No se pueden cargar las mascotas.');
+            // Podrías redirigir al login aquí o mostrar un mensaje al usuario.
+            return;
+        }
+
         try {
-            const response = await fetch(`/api/pets/client/${clientId}`);
+            const response = await fetch(`/api/ClientApi/pets/client/${clientId}`, { // Asegúrate de usar /api/ClientApi/
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // ¡Añade el token!
+                }
+            });
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // Manejo de errores más robusto, leyendo el cuerpo de la respuesta
+                const errorText = await response.text();
+                console.error(`Error al cargar mascotas: HTTP error! status: ${response.status}`, errorText);
+                throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
             }
             const pets = await response.json();
             displayPets(pets);
-            checkPetsAvailability(pets.length > 0); // Verifica si hay mascotas y actualiza el estado del botón de peluquería
+            checkPetsAvailability(pets.length > 0);
         } catch (error) {
             console.error('Error al cargar mascotas:', error);
-            // Podrías mostrar un mensaje de error al usuario aquí
+            // Mostrar un mensaje de error en la UI
         }
     }
 
