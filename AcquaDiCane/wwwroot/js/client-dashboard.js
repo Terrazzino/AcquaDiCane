@@ -109,42 +109,36 @@
 
     // Cargar y mostrar mascotas
 
-
-
     async function loadPets() {
-        const clientId = document.getElementById('clientId').value; // Obtener el clientId del input oculto
-        const token = localStorage.getItem('jwtToken'); // Obtener el token
+        const clientId = document.getElementById('clientId').value;
 
         if (!clientId) {
             console.error('Client ID no encontrado.');
             return;
         }
-        if (!token) {
-            console.error('Token de autenticación no encontrado. No se pueden cargar las mascotas.');
-            // Podrías redirigir al login aquí o mostrar un mensaje al usuario.
-            return;
-        }
 
         try {
-            const response = await fetch(`/api/ClientApi/pets/client/${clientId}`, { // Asegúrate de usar /api/ClientApi/
+            const response = await fetch(`/api/ClientApi/pets`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // ¡Añade el token!
-                }
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include' // Asegura que la cookie de autenticación se incluya
             });
+
             if (!response.ok) {
-                // Manejo de errores más robusto, leyendo el cuerpo de la respuesta
                 const errorText = await response.text();
                 console.error(`Error al cargar mascotas: HTTP error! status: ${response.status}`, errorText);
                 throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
             }
+
             const pets = await response.json();
             displayPets(pets);
             checkPetsAvailability(pets.length > 0);
+
         } catch (error) {
             console.error('Error al cargar mascotas:', error);
-            // Mostrar un mensaje de error en la UI
+            // Mostrar mensaje al usuario si querés
         }
     }
 
@@ -153,40 +147,94 @@
         petsOverviewContainer.innerHTML = ''; // Limpiar contenedor
         if (pets && pets.length > 0) {
             noPetsMessage.style.display = 'none';
-            petsOverviewContainer.style.display = 'grid'; // Asegurar que el grid se muestre
+            petsOverviewContainer.style.display = 'grid'; // Mostrar grid
             pets.forEach(pet => {
                 const petCard = document.createElement('div');
                 petCard.className = 'pet-card';
                 petCard.innerHTML = `
-                    <div class="pet-card-header">${pet.name}</div>
-                    <div class="pet-card-body">
-                        <img src="${pet.profilePicUrl || '/img/default-pet.png'}" alt="Foto de ${pet.name}">
-                        <h3>${pet.name}</h3>
-                        <p><strong>Raza:</strong> ${pet.breed || 'Mestizo'}</p>
-                        <p><strong>Tamaño:</strong> ${pet.size}</p>
-                        <p><strong>Sexo:</strong> ${pet.sex}</p>
-                        <p><strong>Peso:</strong> ${pet.weight} kg</p>
-                        <p><strong>Nacimiento:</strong> ${new Date(pet.birthDate).toLocaleDateString()}</p>
-                        <p><strong>Castrado:</strong> ${pet.castrated ? 'Sí' : 'No'}</p>
-                        <p><strong>Alergias:</strong> ${pet.allergies ? 'Sí' : 'No'}</p>
-                    </div>
-                    <div class="pet-card-actions">
-                        <button class="edit-pet-btn" data-pet-id="${pet.id}">Editar</button>
-                        <button class="delete-pet-btn" data-pet-id="${pet.id}">Eliminar</button>
-                    </div>
-                `;
+                <div class="pet-card-header">${pet.name}</div>
+                <div class="pet-card-body">
+                    <img src="${pet.profilePicUrl || '/img/default-pet.png'}" alt="Foto de ${pet.name}">
+                    <h3>${pet.name}</h3>
+                    <p><strong>Raza:</strong> ${pet.breed || 'Mestizo'}</p>
+                    <p><strong>Tamaño:</strong> ${pet.size}</p>
+                    <p><strong>Sexo:</strong> ${pet.sex}</p>
+                    <p><strong>Peso:</strong> ${pet.weight} kg</p>
+                    <p><strong>Nacimiento:</strong> ${new Date(pet.birthDate).toLocaleDateString()}</p>
+                    <p><strong>Castrado:</strong> ${pet.castrated ? 'Sí' : 'No'}</p>
+                    <p><strong>Alergias:</strong> ${pet.allergies ? 'Sí' : 'No'}</p>
+                </div>
+                <div class="pet-card-actions">
+                    <button class="edit-pet-btn" data-pet-id="${pet.id}">Editar</button>
+                    <button class="delete-pet-btn" data-pet-id="${pet.id}">Eliminar</button>
+                </div>
+            `;
                 petsOverviewContainer.appendChild(petCard);
             });
-            // Ocultar el botón "Registrar mi primera mascota" si ya hay mascotas
+
             document.querySelector('#noPetsMessage .btn-primary').style.display = 'none';
+
+            // Reasignar listeners luego de renderizar
+            petsOverviewContainer.querySelectorAll('.edit-pet-btn').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const petId = this.dataset.petId;
+                    try {
+                        const response = await fetch(`/api/ClientApi/pets/${petId}`);
+                        if (!response.ok) throw new Error('No se pudo cargar la mascota.');
+                        const pet = await response.json();
+                        fillEditPetForm(pet);
+                        showSection('edit-pet-section');
+                    } catch (error) {
+                        console.error('Error al cargar mascota:', error);
+                    }
+                });
+            });
+
+            petsOverviewContainer.querySelectorAll('.delete-pet-btn').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const petId = this.dataset.petId;
+                    if (confirm('¿Estás seguro de que deseas eliminar esta mascota?')) {
+                        try {
+                            const response = await fetch(`/api/ClientApi/pets/${petId}`, {
+                                method: 'DELETE',
+                                credentials: 'include'
+                            });
+
+                            if (response.ok) {
+                                showMessage(addPetMessages, 'Mascota eliminada con éxito!', 'success');
+                                loadPets();
+                            } else {
+                                const errorData = await response.text();
+                                showMessage(addPetMessages, `Error al eliminar la mascota: ${errorData}`, 'error');
+                            }
+                        } catch (error) {
+                            console.error('Error al eliminar mascota:', error);
+                        }
+                    }
+                });
+            });
 
         } else {
             noPetsMessage.style.display = 'block';
-            petsOverviewContainer.style.display = 'none'; // Ocultar el grid si no hay mascotas
-            // Mostrar el botón "Registrar mi primera mascota"
+            petsOverviewContainer.style.display = 'none';
             document.querySelector('#noPetsMessage .btn-primary').style.display = 'block';
         }
     }
+
+    // Asegurate de tener definida esta función si usas el formulario de edición
+    function fillEditPetForm(pet) {
+        document.getElementById('editPetId').value = pet.id;
+        document.getElementById('editPetName').value = pet.name;
+        document.getElementById('editPetBreed').value = pet.breed;
+        document.getElementById('editPetSize').value = pet.size;
+        document.getElementById('editPetSex').value = pet.sex;
+        document.getElementById('editPetWeight').value = pet.weight;
+        document.getElementById('editPetBirthDate').value = pet.birthDate.split('T')[0];
+        document.getElementById('editPetCastrated').checked = pet.castrated;
+        document.getElementById('editPetAllergies').checked = pet.allergies;
+    }
+
+
 
     // Deshabilitar/Habilitar el botón de Peluquería y mostrar mensajes
     function checkPetsAvailability(hasPets) {
@@ -223,19 +271,7 @@
             event.preventDefault();
             addPetMessages.style.display = 'none'; // Ocultar mensajes previos
 
-            if (!clientId) {
-                showMessage(addPetMessages, 'Error: No se pudo obtener el ID del cliente.', 'error');
-                return;
-            }
-
             const formData = new FormData(this);
-            formData.append('ClientId', clientId); // Añadir ClientId al FormData
-
-            // Obtener el token anti-forja
-            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            if (antiForgeryToken) {
-                formData.append('__RequestVerificationToken', antiForgeryToken);
-            }
 
             try {
                 const response = await fetch('/api/ClientApi/pets', {
@@ -246,13 +282,15 @@
                 if (response.ok) {
                     showMessage(addPetMessages, 'Mascota registrada con éxito!', 'success');
                     addPetForm.reset(); // Limpiar el formulario
-                    petBreedInput.disabled = false; // Habilitar campo de raza
-                    noBreedCheckbox.checked = false; // Desmarcar checkbox
-                    loadPets(); // Recargar la lista de mascotas
-                    showSection('overview-section'); // Volver a la sección de mascotas
+                    petBreedInput.disabled = false;
+                    noBreedCheckbox.checked = false;
+                    loadPets(); // Recargar lista
+                    showSection('overview-section');
                 } else {
                     const errorData = await response.json();
-                    const errorMessage = errorData.errors ? Object.values(errorData.errors).flat().join('<br>') : (errorData.message || 'Error al registrar la mascota.');
+                    const errorMessage = errorData.errors
+                        ? Object.values(errorData.errors).flat().join('<br>')
+                        : (errorData.message || 'Error al registrar la mascota.');
                     showMessage(addPetMessages, `Error: ${errorMessage}`, 'error');
                 }
             } catch (error) {

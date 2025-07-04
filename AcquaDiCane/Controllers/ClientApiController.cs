@@ -67,49 +67,39 @@ public class ClientApiController : ControllerBase
     // --- Mascotas ---
 
     // GET: api/ClientApi/pets
+
     [HttpGet("pets")]
-    public async Task<ActionResult<IEnumerable<MascotaApiModel>>> GetPetsForClient(int clientId)
+    public async Task<ActionResult<IEnumerable<MascotaApiModel>>> GetPetsForClient()
     {
-        // Obtén el usuario autenticado para asegurarte de que el clientId que se pide es el del usuario logueado
         var currentUser = await _userManager.GetUserAsync(User);
         if (currentUser == null)
-        {
-            return Unauthorized("Usuario no autenticado."); // Debería ser 401 si no hay token
-        }
+            return Unauthorized("Usuario no autenticado.");
 
-        // El clientId que viene del frontend es el ApplicationUserId (string)
-        if (clientId != currentUser.Id)
-        {
-            return Forbid("No tiene permiso para ver las mascotas de otro cliente."); // 403 Forbidden
-        }
-
-        // Busca el cliente real en tu tabla Clientes usando el ApplicationUserId
         var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.AplicationUserId == currentUser.Id);
         if (cliente == null)
-        {
-            return NotFound("Perfil de cliente no encontrado para el usuario actual.");
-        }
+            return NotFound("Perfil de cliente no encontrado.");
 
-        // Ahora, busca las mascotas asociadas con el ID del Cliente (int) de tu entidad Cliente
         var mascotas = await _context.Mascotas
-                                    .Where(m => m.ClienteAsignadoId == cliente.Id) // <-- Usar ClienteAsignadoId
-                                    .Select(m => new MascotaApiModel // Necesitas definir MascotaApiModel
-                                    {
-                                        Id = m.Id,
-                                        Name = m.Nombre, // Asegúrate de que los nombres de propiedades coincidan con el frontend (pet.name)
-                                        Breed = m.Raza,
-                                        Size = m.Tamaño,
-                                        Sex = m.Sexo,
-                                        Weight = m.Peso,
-                                        BirthDate = m.FechaNacimiento,
-                                        Castrated = m.Castrado,
-                                        Allergies = m.Alergico, // Asegúrate que coincida con pet.allergies
-                                        ProfilePicUrl = m.UrlFotoPerfil // Asegúrate que coincida con pet.profilePicUrl
-                                    })
-                                    .ToListAsync();
+            .Where(m => m.ClienteAsignadoId == cliente.Id)
+            .Select(m => new MascotaApiModel
+            {
+                Id = m.Id,
+                Name = m.Nombre,
+                Breed = m.Raza,
+                Size = m.Tamaño,
+                Sex = m.Sexo,
+                Weight = m.Peso,
+                BirthDate = m.FechaNacimiento,
+                Castrated = m.Castrado,
+                Allergies = m.Alergico,
+                ProfilePicUrl = m.UrlFotoPerfil
+            })
+            .ToListAsync();
 
         return Ok(mascotas);
     }
+
+
     // GET: api/ClientApi/pets/5 (para editar mascota)
     [HttpGet("pets/{id}")]
     public async Task<IActionResult> GetPet(int id)
@@ -145,8 +135,7 @@ public class ClientApiController : ControllerBase
 
     // POST: api/ClientApi/pets
     [HttpPost("pets")]
-    [ValidateAntiForgeryToken] // Añade esto si tu frontend envía el token y lo quieres validar
-    public async Task<IActionResult> AddPet([FromForm] MascotaCreateModel model) // <-- [FromForm] para datos multipart/form-data
+  public async Task<IActionResult> AddPet([FromForm] MascotaCreateModel model) // <-- [FromForm] para datos multipart/form-data
     {
         // Obtener el usuario autenticado para vincular la mascota
         var currentUser = await _userManager.GetUserAsync(User);
@@ -224,8 +213,7 @@ public class ClientApiController : ControllerBase
 
     // PUT: api/ClientApi/pets/5
     [HttpPut("pets/{id}")]
-    [ValidateAntiForgeryToken] // Añade esto si tu frontend envía el token y lo quieres validar
-    public async Task<IActionResult> UpdatePet(int id, [FromForm] MascotaInputModel model)
+   public async Task<IActionResult> UpdatePet(int id, [FromForm] MascotaInputModel model)
     {
         var clienteProfile = await GetClienteProfileAsync();
         if (clienteProfile == null)
@@ -317,8 +305,7 @@ public class ClientApiController : ControllerBase
 
     // DELETE: api/ClientApi/pets/5
     [HttpDelete("pets/{id}")]
-    [ValidateAntiForgeryToken] // Añade esto si tu frontend envía el token y lo quieres validar
-    public async Task<IActionResult> DeletePet(int id)
+   public async Task<IActionResult> DeletePet(int id)
     {
         var pet = await _context.Mascotas.FindAsync(id);
         if (pet == null)
@@ -439,8 +426,7 @@ public class ClientApiController : ControllerBase
 
     // POST: api/ClientApi/appointments
     [HttpPost("appointments")]
-    [ValidateAntiForgeryToken] // Añade esto si tu frontend envía el token y lo quieres validar
-    public async Task<IActionResult> ScheduleAppointment([FromBody] TurnoInputModel model)
+   public async Task<IActionResult> ScheduleAppointment([FromBody] TurnoInputModel model)
     {
         var clienteProfile = await GetClienteProfileAsync();
         if (clienteProfile == null)
@@ -558,7 +544,6 @@ public class ClientApiController : ControllerBase
 
     // PUT: api/ClientApi/appointments/5/cancel
     [HttpPut("appointments/{id}/cancel")]
-    [ValidateAntiForgeryToken] // Añade esto si tu frontend envía el token y lo quieres validar
     public async Task<IActionResult> CancelAppointment(int id)
     {
         var appointment = await _context.Turnos
@@ -699,7 +684,6 @@ public class ClientApiController : ControllerBase
 
     // POST: api/ClientApi/clientprofile/change-password
     [HttpPost("clientprofile/change-password")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordInputModel model)
     {
         var clienteProfile = await GetClienteProfileAsync();

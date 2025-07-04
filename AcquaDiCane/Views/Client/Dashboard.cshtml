@@ -25,13 +25,16 @@
 
 <section id="add-pet-section" class="dashboard-section">
     <h1 class="main-title">Registrar Nueva Mascota</h1>
+
     <form id="addPetForm" enctype="multipart/form-data">
-        @Html.AntiForgeryToken() @* <-- AÑADIDO: Token anti-forja para seguridad *@
+        @Html.AntiForgeryToken()
+
         <div class="form-grid">
             <div class="input-group">
                 <label for="petName">Nombre</label>
                 <input type="text" id="petName" name="Name" required>
             </div>
+
             <div class="input-group">
                 <label for="petBreed">Raza</label>
                 <input type="text" id="petBreed" name="Breed">
@@ -40,6 +43,7 @@
                     <label for="noBreedCheckbox">Sin raza (mestizo)</label>
                 </div>
             </div>
+
             <div class="input-group">
                 <label for="petSize">Tamaño</label>
                 <select id="petSize" name="Size" required>
@@ -50,6 +54,7 @@
                     <option value="gigante">Gigante</option>
                 </select>
             </div>
+
             <div class="input-group">
                 <label for="petSex">Sexo</label>
                 <select id="petSex" name="Sex" required>
@@ -58,33 +63,42 @@
                     <option value="hembra">Hembra</option>
                 </select>
             </div>
+
             <div class="input-group">
                 <label for="petWeight">Peso (kg)</label>
                 <input type="number" id="petWeight" name="Weight" step="0.1" min="0.1" required>
             </div>
+
             <div class="input-group">
                 <label for="petBirthdate">Fecha de Nacimiento</label>
                 <input type="date" id="petBirthdate" name="BirthDate" required>
             </div>
+
             <div class="input-group checkbox-full-width">
-                <input type="checkbox" id="petCastrated" name="Castrated">
+                <input type="hidden" name="Castrated" value="false" />
+                <input type="checkbox" id="petCastrated" name="Castrated" value="true">
                 <label for="petCastrated">¿Está castrado/a?</label>
             </div>
+
             <div class="input-group checkbox-full-width">
-                <input type="checkbox" id="petAllergies" name="Allergies">
+                <input type="hidden" name="Allergies" value="false" />
+                <input type="checkbox" id="petAllergies" name="Allergies" value="true">
                 <label for="petAllergies">¿Tiene alergias conocidas?</label>
             </div>
+
             <div class="input-group full-width">
                 <label for="profilePic">Foto de Perfil</label>
                 <input type="file" id="profilePic" name="ProfilePic" accept="image/*">
                 <small>Opcional. Si no se sube, se usará una imagen por defecto.</small>
             </div>
         </div>
+
         <button type="submit" class="btn-primary">Registrar Mascota</button>
         <button type="button" class="btn-secondary" data-section="cancel-add-pet">Cancelar</button>
         <div id="addPetMessages" class="form-messages"></div>
     </form>
 </section>
+
 
 <section id="schedule-appointment-section" class="dashboard-section">
     <h1 class="main-title">Agendar Turno de Peluquería</h1>

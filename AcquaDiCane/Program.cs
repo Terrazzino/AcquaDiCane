@@ -17,7 +17,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<Contexto>(options =>
     options.UseSqlServer(connectionString));
 
-// Importante: Usar AplicationUser (con una sola 'p') si así está definida en tu modelo
 builder.Services.AddDefaultIdentity<AplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<Contexto>();
