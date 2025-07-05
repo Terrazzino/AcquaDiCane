@@ -10,7 +10,7 @@ namespace AcquaDiCane.Models
         public decimal Monto { get; set; }
         public DateTime? FechaPago { get; set; }
         public string Estado { get; set; } // "Aprobado", "Pendiente", "Rechazado", "Cancelado"
-        public string MercadoPagoPreferenceId { get; set; } // ID que devuelve MP
+        public string? MercadoPagoPreferenceId { get; set; } // ID que devuelve MP
         
         [ForeignKey("Turno")]
         public int TurnoId { get; set; }
@@ -19,7 +19,7 @@ namespace AcquaDiCane.Models
         [ForeignKey("MetodoDePago")]
         public int MetodoDePagoId { get; set; }
         public MetodoDePago MetodoDePago { get; set; }
-        public string CuentaDestino { get; set; }
+        public string? CuentaDestino { get; set; }
     }
 
 }

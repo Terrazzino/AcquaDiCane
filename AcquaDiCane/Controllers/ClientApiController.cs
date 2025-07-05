@@ -1,8 +1,4 @@
 ﻿// Controllers/ClientApiController.cs
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 using AcquaDiCane.Data; // Para tu Contexto
 using AcquaDiCane.Models; // Para tus modelos Mascota, Turno, Servicio, Peluquero, Cliente, DetalleDelTurno, Pago
 using AcquaDiCane.Models.DTOs; // Para tus modelos Mascota, Turno, Servicio, Peluquero, Cliente, DetalleDelTurno, Pago
@@ -12,12 +8,10 @@ using AcquaDiCane.Models.InputModels;
 // Pero si están en una carpeta específica como "InputModels", debes especificarlo.
 
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using System.IO;
-using System.Collections.Generic;
-using System;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 // ... el resto de tu código
 
@@ -135,7 +129,7 @@ public class ClientApiController : ControllerBase
 
     // POST: api/ClientApi/pets
     [HttpPost("pets")]
-  public async Task<IActionResult> AddPet([FromForm] MascotaCreateModel model) // <-- [FromForm] para datos multipart/form-data
+    public async Task<IActionResult> AddPet([FromForm] MascotaCreateModel model) // <-- [FromForm] para datos multipart/form-data
     {
         // Obtener el usuario autenticado para vincular la mascota
         var currentUser = await _userManager.GetUserAsync(User);
@@ -211,9 +205,8 @@ public class ClientApiController : ControllerBase
         return CreatedAtAction(nameof(GetPet), new { id = nuevaMascota.Id }, mascotaCreadaDto);
     }
 
-    // PUT: api/ClientApi/pets/5
     [HttpPut("pets/{id}")]
-   public async Task<IActionResult> UpdatePet(int id, [FromForm] MascotaInputModel model)
+    public async Task<IActionResult> UpdatePet(int id, [FromForm] PetUpdateDto model)
     {
         var clienteProfile = await GetClienteProfileAsync();
         if (clienteProfile == null)
@@ -232,17 +225,17 @@ public class ClientApiController : ControllerBase
             return Unauthorized("No tienes permiso para actualizar esta mascota.");
         }
 
-        // El MascotaInputModel contiene los campos a actualizar
-        // No es necesario revalidar ModelState aquí si ya lo haces al inicio de la acción
-        // y asumes que el modelo de entrada es válido.
-        // Si hay validaciones específicas del lado del servidor que dependan del estado
-        // del objeto existente, se harían aquí.
-        // Pero para el caso de FromForm, ModelState.IsValid ya debería haber sido evaluado al inicio.
+        // "Sin raza" (mestizo)
+        if (string.IsNullOrWhiteSpace(model.Breed) || model.Breed.Trim().ToLower() == "mestizo")
+        {
+            existingPet.Raza = "Mestizo";
+        }
+        else
+        {
+            existingPet.Raza = model.Breed.Trim();
+        }
 
-        // Actualizar propiedades
         existingPet.Nombre = model.Name;
-        existingPet.Raza = model.SinRaza ? "Mestizo" : model.Breed;
-        existingPet.SinRaza = model.SinRaza;
         existingPet.Tamaño = model.Size;
         existingPet.Sexo = model.Sex;
         existingPet.Peso = model.Weight;
@@ -250,24 +243,23 @@ public class ClientApiController : ControllerBase
         existingPet.Castrado = model.Castrated;
         existingPet.Alergico = model.Allergies;
 
-        // Manejar actualización de foto de perfil
+        // Foto de perfil
         if (model.ProfilePic != null && model.ProfilePic.Length > 0)
         {
-            // Eliminar foto anterior si no es la por defecto
-            if (!string.IsNullOrEmpty(existingPet.UrlFotoPerfil) && !existingPet.UrlFotoPerfil.Contains("default-pet.png"))
+            // Borrar foto anterior si no es la default
+            if (!string.IsNullOrEmpty(existingPet.UrlFotoPerfil) &&
+                !existingPet.UrlFotoPerfil.Contains("default-pet.png"))
             {
-                var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, existingPet.UrlFotoPerfil.TrimStart('/'));
-                if (System.IO.File.Exists(oldFilePath))
+                var oldPath = Path.Combine(_webHostEnvironment.WebRootPath, existingPet.UrlFotoPerfil.TrimStart('/'));
+                if (System.IO.File.Exists(oldPath))
                 {
-                    System.IO.File.Delete(oldFilePath);
+                    System.IO.File.Delete(oldPath);
                 }
             }
 
+            // Guardar nueva imagen
             var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "pet_profiles");
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
+            Directory.CreateDirectory(uploadsFolder); // Crea si no existe
 
             var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(model.ProfilePic.FileName);
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
@@ -276,6 +268,7 @@ public class ClientApiController : ControllerBase
             {
                 await model.ProfilePic.CopyToAsync(fileStream);
             }
+
             existingPet.UrlFotoPerfil = $"/uploads/pet_profiles/{uniqueFileName}";
         }
         else if (string.IsNullOrEmpty(existingPet.UrlFotoPerfil))
@@ -284,6 +277,7 @@ public class ClientApiController : ControllerBase
         }
 
         _context.Entry(existingPet).State = EntityState.Modified;
+
         try
         {
             await _context.SaveChangesAsync();
@@ -303,9 +297,11 @@ public class ClientApiController : ControllerBase
         return NoContent();
     }
 
+
+
     // DELETE: api/ClientApi/pets/5
     [HttpDelete("pets/{id}")]
-   public async Task<IActionResult> DeletePet(int id)
+    public async Task<IActionResult> DeletePet(int id)
     {
         var pet = await _context.Mascotas.FindAsync(id);
         if (pet == null)
@@ -426,7 +422,7 @@ public class ClientApiController : ControllerBase
 
     // POST: api/ClientApi/appointments
     [HttpPost("appointments")]
-   public async Task<IActionResult> ScheduleAppointment([FromBody] TurnoInputModel model)
+    public async Task<IActionResult> ScheduleAppointment([FromBody] TurnoInputModel model)
     {
         var clienteProfile = await GetClienteProfileAsync();
         if (clienteProfile == null)
@@ -488,13 +484,21 @@ public class ClientApiController : ControllerBase
 
         var turnoFinaliza = fechaHoraCompleta.Add(duracionTurno);
 
-        var peluqueroOcupado = await _context.Turnos
-            .Where(t => t.PeluqueroAsignadoId == model.GroomerId &&
-                        t.FechaHoraDelTurno < turnoFinaliza && // Un turno existente empieza antes de que el nuevo termine
-                        t.FechaHoraDelTurno.Add(TimeSpan.FromMinutes(t.Detalles.Sum(dt => dt.ServicioAsignado.DuracionEnMinutos > 0 ? dt.ServicioAsignado.DuracionEnMinutos : 60))) > fechaHoraCompleta && // Y el turno existente termina después de que el nuevo empieza
-                        t.Pago.Estado != "Cancelado" // No considerar turnos cancelados
-                        )
-            .AnyAsync();
+        var turnosExistentes = await _context.Turnos
+            .Include(t => t.Detalles)
+                .ThenInclude(dt => dt.ServicioAsignado)
+            .Include(t => t.Pago)
+            .Where(t => t.PeluqueroAsignadoId == model.GroomerId && t.Pago.Estado != "Cancelado")
+            .ToListAsync();
+
+        bool peluqueroOcupado = turnosExistentes.Any(t =>
+        {
+            var inicio = t.FechaHoraDelTurno;
+            var duracion = t.Detalles.Sum(dt => dt.ServicioAsignado.DuracionEnMinutos > 0 ? dt.ServicioAsignado.DuracionEnMinutos : 60);
+            var fin = inicio.AddMinutes(duracion);
+
+            return inicio < turnoFinaliza && fin > fechaHoraCompleta;
+        });
 
         if (peluqueroOcupado)
         {
@@ -509,13 +513,13 @@ public class ClientApiController : ControllerBase
 
 
         // Crear el Pago
-        var pago = new Pago
+        var metodoPendiente = await _context.MetodosDePago
+    .FirstOrDefaultAsync(m => m.NombreDelMetodo == "Pendiente");
+
+        if (metodoPendiente == null)
         {
-            Estado = "Pendiente",
-            Monto = servicio.Precio,
-            FechaPago = null
-        };
-        _context.Pagos.Add(pago);
+            return BadRequest("Método de pago 'Pendiente' no encontrado.");
+        }
 
         // Crear el Turno
         var turno = new Turno
@@ -524,19 +528,37 @@ public class ClientApiController : ControllerBase
             PeluqueroAsignadoId = model.GroomerId,
             FechaHoraDelTurno = fechaHoraCompleta,
             PrecioTotal = servicio.Precio,
-            Pago = pago,
             Detalles = new List<DetalleDelTurno>
-            {
-                new DetalleDelTurno
-                {
-                    ServicioAsignadoId = model.ServiceId,
-                    PrecioServicio = servicio.Precio,
-                }
-            }
+    {
+        new DetalleDelTurno
+        {
+            ServicioAsignadoId = model.ServiceId,
+            PrecioServicio = servicio.Precio,
+        }
+    }
         };
+
 
         _context.Turnos.Add(turno);
         await _context.SaveChangesAsync();
+
+        var pago = new Pago
+        {
+            TurnoId = turno.Id,
+            Monto = turno.PrecioTotal,
+            Estado = "Pendiente",
+            MetodoDePagoId = 3, // Id del método "Pendiente"
+            FechaPago = null,
+            CuentaDestino = null,
+            MercadoPagoPreferenceId = null
+        };
+
+        turno.Pago = pago;
+        _context.Pagos.Add(pago);
+        await _context.SaveChangesAsync();
+
+
+
 
         return CreatedAtAction(nameof(GetAppointments), new { message = "Turno y pago asociados agendados con éxito." });
     }

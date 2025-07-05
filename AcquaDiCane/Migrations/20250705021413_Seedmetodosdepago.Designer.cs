@@ -4,6 +4,7 @@ using AcquaDiCane.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AcquaDiCane.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20250705021413_Seedmetodosdepago")]
+    partial class Seedmetodosdepago
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -276,11 +279,6 @@ namespace AcquaDiCane.Migrations
                         {
                             Id = 2,
                             NombreDelMetodo = "MercadoPago"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            NombreDelMetodo = "Pendiente"
                         });
                 });
 
@@ -303,6 +301,7 @@ namespace AcquaDiCane.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("MercadoPagoPreferenceId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("MetodoDePagoId")
@@ -314,14 +313,12 @@ namespace AcquaDiCane.Migrations
                     b.Property<int>("TurnoId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TurnoId2")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("MetodoDePagoId");
 
-                    b.HasIndex("TurnoId");
+                    b.HasIndex("TurnoId")
+                        .IsUnique();
 
                     b.ToTable("Pagos");
                 });
@@ -397,16 +394,16 @@ namespace AcquaDiCane.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("MotivoCancelacion")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Observacion")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ObservacionesFinalizacion")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("PagoId")
-                        .HasColumnType("int");
 
                     b.Property<int>("PeluqueroAsignadoId")
                         .HasColumnType("int");
@@ -416,11 +413,8 @@ namespace AcquaDiCane.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MascotaAsignadaId");
-
-                    b.HasIndex("PagoId")
-                        .IsUnique()
-                        .HasFilter("[PagoId] IS NOT NULL");
+                    b.HasIndex("MascotaAsignadaId")
+                        .IsUnique();
 
                     b.HasIndex("PeluqueroAsignadoId");
 
@@ -634,8 +628,8 @@ namespace AcquaDiCane.Migrations
                         .IsRequired();
 
                     b.HasOne("AcquaDiCane.Models.Turno", "Turno")
-                        .WithMany()
-                        .HasForeignKey("TurnoId")
+                        .WithOne("Pago")
+                        .HasForeignKey("AcquaDiCane.Models.Pago", "TurnoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -658,15 +652,10 @@ namespace AcquaDiCane.Migrations
             modelBuilder.Entity("AcquaDiCane.Models.Turno", b =>
                 {
                     b.HasOne("AcquaDiCane.Models.Mascota", "MascotaAsignada")
-                        .WithMany("Turnos")
-                        .HasForeignKey("MascotaAsignadaId")
+                        .WithOne("Turno")
+                        .HasForeignKey("AcquaDiCane.Models.Turno", "MascotaAsignadaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("AcquaDiCane.Models.Pago", "Pago")
-                        .WithOne()
-                        .HasForeignKey("AcquaDiCane.Models.Turno", "PagoId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AcquaDiCane.Models.Identity.Peluquero", "PeluqueroAsignado")
                         .WithMany("Turnos")
@@ -675,8 +664,6 @@ namespace AcquaDiCane.Migrations
                         .IsRequired();
 
                     b.Navigation("MascotaAsignada");
-
-                    b.Navigation("Pago");
 
                     b.Navigation("PeluqueroAsignado");
                 });
@@ -755,7 +742,8 @@ namespace AcquaDiCane.Migrations
 
             modelBuilder.Entity("AcquaDiCane.Models.Mascota", b =>
                 {
-                    b.Navigation("Turnos");
+                    b.Navigation("Turno")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("AcquaDiCane.Models.MetodoDePago", b =>
@@ -771,6 +759,8 @@ namespace AcquaDiCane.Migrations
             modelBuilder.Entity("AcquaDiCane.Models.Turno", b =>
                 {
                     b.Navigation("Detalles");
+
+                    b.Navigation("Pago");
                 });
 #pragma warning restore 612, 618
         }

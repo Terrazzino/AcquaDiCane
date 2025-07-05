@@ -99,7 +99,77 @@
     </form>
 </section>
 
+<section id="edit-pet-section" class="dashboard-section">
+    <h1 class="main-title">Editar Mascota</h1>
 
+    <form id="editPetForm" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" id="editPetId" name="Id" />
+
+        <div class="form-grid">
+            <div class="input-group">
+                <label for="editPetName">Nombre</label>
+                <input type="text" id="editPetName" name="Name" required>
+            </div>
+
+            <div class="input-group">
+                <label for="editPetBreed">Raza</label>
+                <input type="text" id="editPetBreed" name="Breed">
+            </div>
+
+            <div class="input-group">
+                <label for="editPetSize">Tamaño</label>
+                <select id="editPetSize" name="Size" required>
+                    <option value="">Seleccione...</option>
+                    <option value="pequeno">Pequeño</option>
+                    <option value="mediano">Mediano</option>
+                    <option value="grande">Grande</option>
+                    <option value="gigante">Gigante</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="editPetSex">Sexo</label>
+                <select id="editPetSex" name="Sex" required>
+                    <option value="">Seleccione...</option>
+                    <option value="macho">Macho</option>
+                    <option value="hembra">Hembra</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="editPetWeight">Peso (kg)</label>
+                <input type="number" id="editPetWeight" name="Weight" step="0.1" min="0.1" required>
+            </div>
+
+            <div class="input-group">
+                <label for="editPetBirthDate">Fecha de Nacimiento</label>
+                <input type="date" id="editPetBirthDate" name="BirthDate" required>
+            </div>
+
+            <div class="input-group checkbox-full-width">
+                <input type="hidden" name="Castrated" value="false" />
+                <input type="checkbox" id="editPetCastrated" name="Castrated" value="true">
+                <label for="editPetCastrated">¿Está castrado/a?</label>
+            </div>
+
+            <div class="input-group checkbox-full-width">
+                <input type="hidden" name="Allergies" value="false" />
+                <input type="checkbox" id="editPetAllergies" name="Allergies" value="true">
+                <label for="editPetAllergies">¿Tiene alergias conocidas?</label>
+            </div>
+
+            <div class="input-group full-width">
+                <label for="editProfilePic">Foto de Perfil</label>
+                <input type="file" id="editProfilePic" name="ProfilePic" accept="image/*">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Guardar Cambios</button>
+        <button type="button" class="btn-secondary" data-section="overview">Cancelar</button>
+        <div id="editPetMessages" class="form-messages"></div>
+    </form>
+</section>
 <section id="schedule-appointment-section" class="dashboard-section">
     <h1 class="main-title">Agendar Turno de Peluquería</h1>
     <p class="section-description">Selecciona a tu mascota y los detalles del turno.</p>

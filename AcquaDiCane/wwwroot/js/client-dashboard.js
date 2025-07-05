@@ -104,9 +104,14 @@
         });
     }
 
-    // --- Lógica de Mascotas ---
+    // Manejar el botón de "Pagar turno" en las tarjetas de los turnos
+    if (turno.estado === "Pendiente") {
+        tarjeta += `
+    <button class="btn btn-success btn-sm ms-2" onclick="abrirModalPago(${turno.id})">Pagar</button>
+  `;
+    }
 
-
+    // --- Lógica de Mascotas --
     // Cargar y mostrar mascotas
 
     async function loadPets() {
@@ -184,6 +189,13 @@
                         const pet = await response.json();
                         fillEditPetForm(pet);
                         showSection('edit-pet-section');
+
+                        const cancelEditBtn = document.querySelector('[data-section="cancel-edit-pet"]');
+                        if (cancelEditBtn) {
+                            cancelEditBtn.addEventListener('click', () => {
+                                showSection('overview-section');
+                            });
+                        }
                     } catch (error) {
                         console.error('Error al cargar mascota:', error);
                     }
@@ -233,6 +245,37 @@
         document.getElementById('editPetCastrated').checked = pet.castrated;
         document.getElementById('editPetAllergies').checked = pet.allergies;
     }
+
+    //enviar formulario edicion
+    document.getElementById('editPetForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const petId = document.getElementById('editPetId').value;
+        const form = e.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(`/api/ClientApi/pets/${petId}`, {
+                method: 'PUT',
+                body: formData
+            });
+
+            const messagesContainer = document.getElementById('editPetMessages');
+            messagesContainer.innerHTML = '';
+
+            if (response.ok) {
+                messagesContainer.innerHTML = '<p class="success-message">Mascota actualizada con éxito.</p>';
+                loadPets(); // Volver a cargar la lista
+                showSection('overview-section');
+            } else {
+                const errorText = await response.text();
+                messagesContainer.innerHTML = `<p class="error-message">Error: ${errorText}</p>`;
+            }
+        } catch (error) {
+            console.error('Error actualizando mascota:', error);
+            document.getElementById('editPetMessages').innerHTML = '<p class="error-message">Error al actualizar la mascota.</p>';
+        }
+    });
 
 
 
@@ -312,10 +355,8 @@
 
     async function loadPetsForAppointment() {
         appointmentPetSelect.innerHTML = '<option value="">Seleccione una mascota...</option>';
-        if (!clientId) return;
-
         try {
-            const response = await fetch(`/api/pets/client/${clientId}`);
+            const response = await fetch('/api/ClientApi/pets');
             if (!response.ok) throw new Error('Failed to load pets');
             const pets = await response.json();
 
@@ -338,10 +379,11 @@
         }
     }
 
+
     async function loadGroomers() {
         appointmentGroomerSelect.innerHTML = '<option value="">Seleccione un peluquero...</option>';
         try {
-            const response = await fetch('/api/groomers');
+            const response = await fetch('/api/ClientApi/groomers');
             if (!response.ok) throw new Error('Failed to load groomers');
             const groomers = await response.json();
             if (groomers.length > 0) {
@@ -365,15 +407,15 @@
     async function loadServices() {
         appointmentServiceSelect.innerHTML = '<option value="">Seleccione un servicio...</option>';
         try {
-            const response = await fetch('/api/services');
+            const response = await fetch('/api/ClientApi/services');
             if (!response.ok) throw new Error('Failed to load services');
             const services = await response.json();
             if (services.length > 0) {
                 services.forEach(service => {
                     const option = document.createElement('option');
                     option.value = service.id;
-                    option.textContent = service.name;
-                    option.dataset.price = service.price; // Guardar el precio en un data-attribute
+                    option.textContent = service.nombre;
+                    option.dataset.price = service.precio;
                     appointmentServiceSelect.appendChild(option);
                 });
                 noServicesOrGroomersMessage.style.display = 'none';
@@ -398,10 +440,8 @@
 
     async function loadAppointments() {
         appointmentsListContainer.innerHTML = '<p>Cargando turnos...</p>';
-        if (!clientId) return;
-
         try {
-            const response = await fetch(`/api/appointments/client/${clientId}`);
+            const response = await fetch('/api/ClientApi/appointments');
             if (!response.ok) throw new Error('Failed to load appointments');
             const appointments = await response.json();
             displayAppointments(appointments);
@@ -410,6 +450,7 @@
             appointmentsListContainer.innerHTML = '<p>Error al cargar los turnos.</p>';
         }
     }
+
 
     function displayAppointments(appointments) {
         appointmentsListContainer.innerHTML = '';
@@ -443,7 +484,7 @@
                 const appointmentId = this.dataset.appointmentId;
                 if (confirm('¿Estás seguro de que quieres cancelar este turno?')) {
                     try {
-                        const response = await fetch(`/api/appointments/${appointmentId}/cancel`, {
+                        const response = await fetch(`/api/ClientApi/appointments/${appointmentId}/cancel`, {
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -473,13 +514,15 @@
             event.preventDefault();
             scheduleAppointmentMessages.style.display = 'none'; // Ocultar mensajes previos
 
+            const time = appointmentTimeInput.value;
+            const timeFormatted = time.length === 5 ? `${time}:00` : time;
+
             const formData = {
                 PetId: appointmentPetSelect.value,
                 Date: appointmentDateInput.value,
-                Time: appointmentTimeInput.value,
+                Time: timeFormatted,
                 GroomerId: appointmentGroomerSelect.value,
-                ServiceId: appointmentServiceSelect.value,
-                ClientId: clientId // Asegúrate de enviar el ClientId
+                ServiceId: appointmentServiceSelect.value
             };
 
             // Validación básica de campos
@@ -496,7 +539,7 @@
             }
 
             try {
-                const response = await fetch('/api/appointments', {
+                const response = await fetch('/api/ClientApi/appointments', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -510,9 +553,21 @@
                     scheduleAppointmentForm.reset(); // Limpiar el formulario
                     loadAppointments(); // Recargar la lista de turnos
                 } else {
-                    const errorData = await response.json();
-                    const errorMessage = errorData.errors ? Object.values(errorData.errors).flat().join('<br>') : (errorData.message || 'Error al agendar el turno.');
-                    showMessage(scheduleAppointmentMessages, `Error: ${errorMessage}`, 'error');
+                    const contentType = response.headers.get("content-type");
+                    let errorMessage = 'Error al agendar el turno.';
+
+                    if (contentType && contentType.includes("application/json")) {
+                        const errorData = await response.json();
+                        errorMessage = errorData.errors
+                            ? Object.values(errorData.errors).flat().join('<br>')
+                            : (errorData.message || errorMessage);
+                    } else {
+                        const errorText = await response.text();
+                        errorMessage = `Error: ${errorText}`;
+                    }
+
+                    showMessage(scheduleAppointmentMessages, errorMessage, 'error');
+
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -529,7 +584,7 @@
             return;
         }
         try {
-            const response = await fetch(`/api/clientprofile/${clientId}`);
+            const response = await fetch(`/api/ClientApi/clientprofile`);
             if (!response.ok) throw new Error('Failed to load profile data');
             const profile = await response.json();
 
@@ -639,7 +694,7 @@
             const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
             try {
-                const response = await fetch('/api/clientprofile/change-password', {
+                const response = await fetch(`/api/ClientApi/clientprofile/change-password`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
