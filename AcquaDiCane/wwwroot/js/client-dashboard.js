@@ -32,6 +32,9 @@
     const editProfileMessages = document.getElementById('editProfileMessages');
     const changePasswordMessages = document.getElementById('changePasswordMessages');
 
+    const pagoForm = document.getElementById("pagoForm");
+    const metodoSelect = document.getElementById("metodoDePago");
+    const cuentaInputGroup = document.getElementById("cuentaDestinoGroup");
     // --- Funciones de Utilidad ---
 
     // Función para mostrar mensajes de éxito o error
@@ -457,22 +460,24 @@
             const appointmentCard = document.createElement('div');
             appointmentCard.className = 'appointment-card';
             appointmentCard.innerHTML = `
-                <div class="appointment-info">
-                    <h3>Turno para ${appt.petName}</h3>
-                    <p><strong>Fecha:</strong> ${new Date(appt.date).toLocaleDateString()}</p>
-                    <p><strong>Hora:</strong> ${appt.time}</p>
-                    <p><strong>Servicio:</strong> ${appt.serviceName}</p>
-                    <p><strong>Peluquero:</strong> ${appt.groomerName}</p>
-                </div>
-                <span class="appointment-status status-${appt.status}">${appt.status}</span>
-                <div class="appointment-actions">
-                    ${appt.status === 'Pendiente' ? `<button class="cancel-appointment-btn" data-appointment-id="${appt.id}">Cancelar</button>` : ''}
-                </div>
-            `;
+            <div class="appointment-info">
+                <h3>Turno para ${appt.petName}</h3>
+                <p><strong>Fecha:</strong> ${new Date(appt.date).toLocaleDateString()}</p>
+                <p><strong>Hora:</strong> ${appt.time}</p>
+                <p><strong>Servicio:</strong> ${appt.serviceName}</p>
+                <p><strong>Peluquero:</strong> ${appt.groomerName}</p>
+                ${appt.metodoDePago ? `<p><strong>Pago:</strong> ${appt.metodoDePago} (${appt.pagoEstado})</p>` : ''}
+            </div>
+            <span class="appointment-status status-${appt.pagoEstado.toLowerCase()}">${appt.pagoEstado}</span>
+            <div class="appointment-actions">
+                ${appt.pagoEstado === 'Pendiente' || appt.pagoEstado === 'Confirmado' ? `<button class="cancel-appointment-btn" data-appointment-id="${appt.id}">Cancelar</button>` : ''}
+                ${appt.mostrarBotonPago ? `<button class="pay-appointment-btn" data-appointment-id="${appt.id}">Pagar</button>` : ''}
+            </div>
+        `;
             appointmentsListContainer.appendChild(appointmentCard);
         });
 
-        // Añadir listeners a los botones de cancelar
+        // Listeners para cancelar
         appointmentsListContainer.querySelectorAll('.cancel-appointment-btn').forEach(button => {
             button.addEventListener('click', async function () {
                 const appointmentId = this.dataset.appointmentId;
@@ -482,12 +487,12 @@
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value // Incluir token
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
                             }
                         });
                         if (response.ok) {
                             showMessage(scheduleAppointmentMessages, 'Turno cancelado con éxito.', 'success');
-                            loadAppointments(); // Recargar la lista de turnos
+                            loadAppointments();
                         } else {
                             const errorData = await response.json();
                             showMessage(scheduleAppointmentMessages, `Error al cancelar turno: ${errorData.message || 'Error desconocido'}`, 'error');
@@ -499,6 +504,18 @@
                 }
             });
         });
+
+        // Listeners para pagar
+        // Listeners para pagar
+        appointmentsListContainer.querySelectorAll('.pay-appointment-btn').forEach(button => {
+            button.addEventListener('click', async function () {
+                const appointmentId = this.dataset.appointmentId;
+
+                // Redirigir a una página externa (por ahora, MercadoPago)
+                window.open('https://www.mercadopago.com.ar/', '_blank');
+            });
+        });
+
     }
 
 
@@ -711,6 +728,51 @@
             }
         });
     }
+
+    //pago
+    metodoSelect.addEventListener("change", () => {
+        if (metodoSelect.value === "2") {
+            cuentaInputGroup.style.display = "block";
+        } else {
+            cuentaInputGroup.style.display = "none";
+        }
+    });
+
+    pagoForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const pagoId = document.getElementById("pagoId").value;
+        const metodoDePagoId = parseInt(document.getElementById("metodoDePago").value);
+        const cuentaDestino = document.getElementById("cuentaDestino").value;
+
+        const dto = {
+            metodoDePagoId,
+            cuentaDestino: metodoDePagoId === 2 ? cuentaDestino : null
+        };
+
+        try {
+            const res = await fetch(`/api/clientapi/pagos/${pagoId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(dto)
+            });
+
+            if (res.ok) {
+                // recargar turnos o actualizar UI
+                $('#pagoModal').modal('hide');
+                alert("Pago realizado con éxito.");
+                loadAppointments(); // o como se llame tu función
+            } else {
+                const error = await res.text();
+                alert("Error al procesar el pago: " + error);
+            }
+        } catch (err) {
+            console.error("Error:", err);
+            alert("Ocurrió un error al intentar pagar.");
+        }
+    });
 
 
     // --- Inicialización ---

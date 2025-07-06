@@ -342,35 +342,49 @@ public class ClientApiController : ControllerBase
     [HttpGet("appointments")]
     public async Task<IActionResult> GetAppointments()
     {
-        var clienteProfile = await GetClienteProfileAsync();
-        if (clienteProfile == null)
-        {
-            return Unauthorized("Perfil de cliente no encontrado para el usuario actual o usuario no autenticado.");
-        }
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out int userId))
+            return BadRequest("ID de usuario inválido.");
 
-        var appointments = await _context.Turnos
-                                         .Include(a => a.MascotaAsignada)
-                                         .Include(a => a.PeluqueroAsignado)
-                                             .ThenInclude(p => p.AplicationUser)
-                                         .Include(a => a.Detalles)
-                                             .ThenInclude(dt => dt.ServicioAsignado)
-                                         .Include(a => a.Pago)
-                                         .Where(a => a.MascotaAsignada.ClienteAsignadoId == clienteProfile.Id)
-                                         .OrderByDescending(a => a.FechaHoraDelTurno)
-                                         .Select(a => new
-                                         {
-                                             id = a.Id,
-                                             date = a.FechaHoraDelTurno.ToString("yyyy-MM-dd"),
-                                             time = a.FechaHoraDelTurno.ToString(@"HH\:mm"),
-                                             groomerName = a.PeluqueroAsignado.AplicationUser.Nombre,
-                                             serviceName = string.Join(", ", a.Detalles.Select(dt => dt.ServicioAsignado.Nombre).ToList()),
-                                             price = a.PrecioTotal,
-                                             status = a.Pago.Estado,
-                                             petName = a.MascotaAsignada.Nombre
-                                         })
-                                         .ToListAsync();
-        return Ok(appointments);
+        var cliente = await _context.Clientes
+            .Include(c => c.Mascotas)
+                .ThenInclude(m => m.Turnos)
+                    .ThenInclude(t => t.Detalles)
+                        .ThenInclude(d => d.ServicioAsignado)
+            .Include(c => c.Mascotas)
+                .ThenInclude(m => m.Turnos)
+                    .ThenInclude(t => t.PeluqueroAsignado)
+                        .ThenInclude(p => p.AplicationUser)
+            .Include(c => c.Mascotas)
+                .ThenInclude(m => m.Turnos)
+                    .ThenInclude(t => t.Pago)
+                        .ThenInclude(p => p.MetodoDePago)
+            .FirstOrDefaultAsync(c => c.AplicationUserId == userId);
+
+        if (cliente == null)
+            return NotFound("Cliente no encontrado.");
+
+        var turnos = cliente.Mascotas
+            .SelectMany(m => m.Turnos.Select(t => new TurnoClienteModel
+            {
+                Id = t.Id,
+                Date = t.FechaHoraDelTurno,
+                Time = t.FechaHoraDelTurno.ToString("HH:mm"),
+                PetName = m.Nombre,
+                ServiceName = string.Join(", ", t.Detalles?.Select(d => d.ServicioAsignado?.Nombre).Where(n => n != null) ?? new List<string>()),
+                GroomerName = t.PeluqueroAsignado?.AplicationUser?.Nombre ?? "(Sin asignar)",
+                MetodoDePago = t.Pago?.MetodoDePago?.NombreDelMetodo ?? "No especificado",
+                PagoEstado = t.Pago?.Estado ?? "Sin datos",
+                MostrarBotonPago = t.Pago != null && t.Pago.Estado == "Pendiente"
+            }))
+            .OrderBy(t => t.Date)
+            .ToList();
+
+        return Ok(turnos);
     }
+
+
+
 
     // GET: api/ClientApi/appointments/next?petId=X
     [HttpGet("appointments/next")]
@@ -564,6 +578,39 @@ public class ClientApiController : ControllerBase
     }
 
 
+    [Authorize(Roles = "Cliente")]
+    [HttpPut("pagos/{pagoId}")]
+    public async Task<IActionResult> ActualizarPago(int pagoId, [FromBody] PagoUpdateDto dto)
+    {
+        var pago = await _context.Pagos.FindAsync(pagoId);
+        if (pago == null)
+        {
+            return NotFound("Pago no encontrado.");
+        }
+
+        // Validar que el turno aún esté pendiente
+        var turno = await _context.Turnos.FindAsync(pago.TurnoId);
+        if (turno == null || turno.Estado != "Pendiente")
+        {
+            return BadRequest("No se puede actualizar el pago de un turno que no está pendiente.");
+        }
+
+        // Actualizar
+        pago.MetodoDePagoId = dto.MetodoDePagoId;
+        pago.CuentaDestino = dto.CuentaDestino;
+        pago.FechaPago = dto.FechaPago;
+        pago.Estado = dto.Estado;
+
+        // Marcar turno como pagado (opcional)
+        turno.Estado = "Pagado";
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Pago actualizado con éxito." });
+    }
+
+
+
     // PUT: api/ClientApi/appointments/5/cancel
     [HttpPut("appointments/{id}/cancel")]
     public async Task<IActionResult> CancelAppointment(int id)
@@ -739,4 +786,7 @@ public class ClientApiController : ControllerBase
 
         return Ok(new { message = "Contraseña cambiada con éxito." });
     }
+
+
+
 }
