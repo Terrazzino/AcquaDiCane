@@ -37,7 +37,6 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
         // READ (GET) - Obtener todos los peluqueros
         // GET: api/PeluqueroApi
         [HttpGet]
-        [HttpGet]
         public async Task<ActionResult<IEnumerable<PeluqueroApiModel>>> GetPeluqueros()
         {
             try
@@ -339,21 +338,43 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePeluquero(int id)
         {
-            var peluquero = await _context.Peluqueros.Include(p => p.AplicationUser).FirstOrDefaultAsync(p => p.Id == id);
+            var peluquero = await _context.Peluqueros
+                .Include(p => p.AplicationUser)
+                .Include(p => p.JornadaSemanal)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
             if (peluquero == null)
             {
                 return NotFound("Peluquero no encontrado.");
             }
 
-            // Eliminar primero las jornadas diarias asociadas al peluquero
+            // Buscar los turnos asignados al peluquero
+            var turnos = await _context.Turnos
+                .Where(t => t.PeluqueroAsignadoId == peluquero.Id)
+                .ToListAsync();
+
+            // Eliminar detalles de esos turnos (por DeleteBehavior.Restrict)
+            var turnoIds = turnos.Select(t => t.Id).ToList();
+            var detalles = await _context.DetallesDeTurnos
+                .Where(d => turnoIds.Contains(d.TurnoAsignadoId))
+                .ToListAsync();
+
+            _context.DetallesDeTurnos.RemoveRange(detalles);
+            await _context.SaveChangesAsync();
+
+            // Eliminar turnos del peluquero
+            _context.Turnos.RemoveRange(turnos);
+            await _context.SaveChangesAsync();
+
+            // Eliminar jornadas
             _context.JornadasSemanales.RemoveRange(peluquero.JornadaSemanal);
-            await _context.SaveChangesAsync(); // Guardar cambios para asegurar que las FKs de jornadas se liberan
+            await _context.SaveChangesAsync();
 
-            // Eliminar el perfil de Peluquero de tu tabla
+            // Eliminar perfil Peluquero
             _context.Peluqueros.Remove(peluquero);
-            await _context.SaveChangesAsync(); // Guardar cambios para asegurar que la FK de Peluquero se libera
+            await _context.SaveChangesAsync();
 
-            // Luego eliminar el AplicationUser de Identity
+            // Eliminar usuario Identity
             var user = peluquero.AplicationUser;
             if (user != null)
             {
@@ -364,7 +385,7 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
                 }
             }
 
-            return NoContent(); // 204 No Content para una eliminación exitosa
+            return NoContent(); // 204 OK
         }
 
         private bool PeluqueroExists(int id)

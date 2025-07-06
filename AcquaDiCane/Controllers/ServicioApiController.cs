@@ -169,18 +169,23 @@ namespace AcquaDiCane.Web.Controllers // Ajusta el namespace si es diferente
                 return NotFound("Servicio no encontrado para eliminar.");
             }
 
-            // Aquí, si DetalleDelTurno tiene una clave foránea que referencia a Servicio,
-            // y tienes configurado un borrado en cascada en tu base de datos o en EF Core,
-            // al borrar el Servicio se borrarán los DetallesDelTurno asociados.
-            // Si no es el caso, o si quieres un manejo explícito, tendrías que borrar primero los detalles:
-            // var detallesAsociados = _context.DetallesDelTurno.Where(d => d.ServicioId == id);
-            // _context.DetallesDelTurno.RemoveRange(detallesAsociados);
-            // await _context.SaveChangesAsync(); // Guardar antes de borrar el servicio si no hay cascada
+            // Buscar si hay algún DetalleDelTurno con este servicio en turnos futuros o no cancelados
+            var estaEnUso = await _context.DetallesDeTurnos
+                .Include(d => d.TurnoAsignado)
+                .AnyAsync(d =>
+                    d.ServicioAsignadoId == id &&
+                    d.TurnoAsignado.Estado != "Cancelado" // Podés ajustar esta lógica
+                );
+
+            if (estaEnUso)
+            {
+                return Conflict("No se puede eliminar el servicio porque está asignado a al menos un turno activo o pendiente.");
+            }
 
             _context.Servicios.Remove(servicio);
-            await _context.SaveChangesAsync(); // Elimina el servicio de la base de datos
+            await _context.SaveChangesAsync();
 
-            return NoContent(); // 204 No Content para una eliminación exitosa
+            return NoContent();
         }
 
         private bool ServicioExists(int id)

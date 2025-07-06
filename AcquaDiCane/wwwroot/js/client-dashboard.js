@@ -104,12 +104,6 @@
         });
     }
 
-    // Manejar el botón de "Pagar turno" en las tarjetas de los turnos
-    if (turno.estado === "Pendiente") {
-        tarjeta += `
-    <button class="btn btn-success btn-sm ms-2" onclick="abrirModalPago(${turno.id})">Pagar</button>
-  `;
-    }
 
     // --- Lógica de Mascotas --
     // Cargar y mostrar mascotas
@@ -721,6 +715,6 @@
 
     // --- Inicialización ---
     // Cargar las mascotas al inicio para determinar el estado del botón de peluquería
-    loadPets();
     showSection('overview-section'); // Asegurarse de que la sección de mascotas esté activa al cargar
+    loadPets();
 });
